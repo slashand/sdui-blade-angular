@@ -7,7 +7,7 @@
     "url": "https://github.com/slashand/sdui-blade-angular.git"
   },
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
+    "access": "public"
   },
   "scripts": {
     "build": "ng-packagr -p ng-package.json",
