@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+import { CommonModule, NgComponentOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, OnInit, signal, Type } from '@angular/core';
 import { BLADE_REGISTRY } from './sdui-blade-registry';
 import { SduiBladeService } from './sdui-blade.service';
@@ -6,31 +6,36 @@ import { SduiBladeService } from './sdui-blade.service';
 @Component({
   selector: 'app-sdui-blade-host',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, NgComponentOutlet],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    @if (bladeService.hasActiveBlades()) {
-      <div class="absolute inset-0 w-full h-full flex overflow-hidden z-[100] pointer-events-auto">
-        <!-- Render Blades via for loop -->
-        @for (blade of bladeService.activeBlades(); track blade.id; let i = $index) {
-          <div 
-            class="absolute inset-0 flex flex-col pointer-events-none transition-transform duration-300 ease-out"
-            [style.zIndex]="10 + i"
-          >
-            <!-- Wrapper enforcing rigid SDUI constraints, mimicking the framer-motion approach -->
-            <div class="flex-1 overflow-auto no-scrollbar relative z-0 pointer-events-auto flex flex-col"
-                 [class]="i === 0 ? '[&>*]:!w-full [&>*]:!max-w-none [&>*]:!ml-0 [&>*]:!border-l-0 [&>*]:!rounded-none' : ''"
+    <div class="relative w-full h-full flex overflow-hidden">
+      <!-- MAIN APP CONTENT (ROUTER OUTLET) -->
+      <ng-content></ng-content>
+
+      @if (bladeService.hasActiveBlades()) {
+        <div class="absolute inset-0 w-full h-full flex overflow-hidden z-[100] pointer-events-auto">
+          <!-- Render Blades via for loop -->
+          @for (blade of bladeService.activeBlades(); track blade.id; let i = $index) {
+            <div 
+              class="absolute inset-0 flex flex-col pointer-events-none transition-transform duration-300 ease-out"
+              [style.zIndex]="10 + i"
             >
-              @if (resolvedComponents()[blade.type]) {
-                <ng-container *ngComponentOutlet="resolvedComponents()[blade.type]!; inputs: { node: blade }"></ng-container>
-              } @else {
-                <!-- Optional fallback loader -->
-              }
+              <!-- Wrapper enforcing rigid SDUI constraints, mimicking the framer-motion approach -->
+              <div class="flex-1 overflow-auto no-scrollbar relative z-0 pointer-events-auto flex flex-col"
+                   [class]="i === 0 ? '[&>*]:!w-full [&>*]:!max-w-none [&>*]:!ml-0 [&>*]:!border-l-0 [&>*]:!rounded-none' : ''"
+              >
+                @if (resolvedComponents()[blade.type]) {
+                  <ng-container *ngComponentOutlet="resolvedComponents()[blade.type]!; inputs: { node: blade }"></ng-container>
+                } @else {
+                  <!-- Optional fallback loader -->
+                }
+              </div>
             </div>
-          </div>
-        }
-      </div>
-    }
+          }
+        </div>
+      }
+    </div>
   `
 })
 export class SduiBladeHostComponent implements OnInit {
