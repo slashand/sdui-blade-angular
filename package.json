@@ -1,15 +1,22 @@
 {
   "name": "@slashand/sdui-blade-angular",
-  "version": "1.0.4",
+  "version": "0.0.5",
   "description": "Angular v21 SDUI rendering wrapper for the Agnostic Blade System.",
-  "author": "Slashand Studio",
+  "author": "Slashand LLC",
   "license": "MIT",
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "keywords": [
     "sdui",
     "server-driven-ui",
     "angular",
     "blade-system",
-    "json-ui"
+    "json-ui",
+    "azure-portal",
+    "ibiza-shell",
+    "micro-frontends",
+    "journey-protocol"
   ],
   "repository": {
     "type": "git",
@@ -26,13 +33,17 @@
     "build": "ng-packagr -p ng-package.json",
     "test": "vitest run",
     "publish:alpha": "npm version prerelease --preid=alpha --no-git-tag-version && npm run build && npm publish ./dist/sdui-blade-angular --tag alpha",
-    "publish:prod": "npm version patch --no-git-tag-version && npm run build && npm publish ./dist/sdui-blade-angular"
+    "publish:prod": "npm version patch --no-git-tag-version && npm run build && npm publish ./dist/sdui-blade-angular",
+    "format": "prettier --write \"src/**/*.ts\""
   },
   "peerDependencies": {
-    "@angular/common": "^21.0.0",
-    "@angular/core": "^21.0.0",
-    "@ngneat/elf": "latest",
-    "@slashand/sdui-blade-core": "^1.0.0"
+    "@angular/common": ">=17.0.0",
+    "@angular/core": ">=17.0.0",
+    "@slashand/sdui-blade-core": "^0.0.5"
+  },
+  "dependencies": {
+    "@slashand/sdui-blade-core": "^0.0.5",
+    "tslib": "^2.3.0"
   },
   "devDependencies": {
     "@analogjs/vite-plugin-angular": "^2.3.1",
