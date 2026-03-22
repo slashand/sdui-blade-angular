@@ -1,7 +1,8 @@
-import { TestBed } from '@angular/core/testing';
 import { Component, signal } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
+import { SduiBladeNode, SduiElementType } from '@slashand/sdui-blade-core';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { SduiRendererComponent } from './sdui-renderer.component';
-import { SduiBladeNode } from '@slashand/sdui-blade-core';
 
 // Dynamic host component to effectively pass required v21 input Signals into the renderer
 @Component({
@@ -12,8 +13,10 @@ import { SduiBladeNode } from '@slashand/sdui-blade-core';
 class TestHostComponent {
   mockNode = signal<SduiBladeNode>({
     id: 'vitest-1',
-    type: 'Common.BaseTestingNode',
-    props: {}
+    type: SduiElementType.Blade,
+    properties: {
+      title: 'Test Blade'
+    }
   });
 }
 
@@ -27,8 +30,8 @@ describe('SduiRendererComponent', () => {
   it('compiles the recursive framework heartbeat flawlessly, guaranteeing zero TS constraints or signal resolution failures', () => {
     const fixture = TestBed.createComponent(TestHostComponent);
     // Triggers the Angular lifecycle and validates the NgComponentOutlet mounting branch
-    fixture.detectChanges(); 
-    
+    fixture.detectChanges();
+
     expect(fixture.componentInstance).toBeTruthy();
     expect(fixture.componentInstance.mockNode().id).toBe('vitest-1');
   });

@@ -16,7 +16,7 @@
  */
 import { CommonModule, NgComponentOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, Type, effect, input, signal } from '@angular/core';
-import { SduiElement } from '@slashand/sdui-blade-core';
+import { SduiNode } from '@slashand/sdui-blade-core';
 import { BLADE_REGISTRY } from './sdui-blade-registry';
 
 @Component({
@@ -29,7 +29,7 @@ import { BLADE_REGISTRY } from './sdui-blade-registry';
       <ng-container *ngComponentOutlet="resolvedComponent()!; inputs: { node: node() }"></ng-container>
     } @else {
       <!-- Fallback gracefully into an error boundary for unmapped JSON nodes -->
-      <div class="w-full text-xs text-red-500 border border-dashed border-red-500/20 p-2">
+      <div class="w-full text-xs text-[var(--sdui-error-text)] border border-dashed border-[var(--sdui-error-border)] p-2">
         <span class="font-bold">Missing Registry Loader:</span> {{ node().type }}
       </div>
     }
@@ -37,7 +37,7 @@ import { BLADE_REGISTRY } from './sdui-blade-registry';
 })
 export class SduiRendererComponent {
   /** The direct JSON payload chunk fed from the orchestrator */
-  public readonly node = input.required<SduiElement>();
+  public readonly node = input.required<SduiNode>();
   
   /** The actively resolved native Angular Class representing the node type */
   protected readonly resolvedComponent = signal<Type<unknown> | null>(null);
