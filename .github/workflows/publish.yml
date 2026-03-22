@@ -8,6 +8,9 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -15,7 +18,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20.x'
+          node-version: '24.x'
           registry-url: 'https://registry.npmjs.org'
 
       - name: Install Dependencies
@@ -24,7 +27,5 @@ jobs:
       - name: Build Library
         run: npm run build
 
-      - name: Publish to NPM
-        run: npm publish ./dist/sdui-blade-angular
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Publish to NPM (Prerelease)
+        run: npm publish ./dist/sdui-blade-angular --access public --tag alpha --provenance
