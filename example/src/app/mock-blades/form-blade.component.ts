@@ -10,8 +10,8 @@ import { SduiBladeHeaderComponent, SduiBladeContentComponent, SduiRendererCompon
   template: `
     <div class="flex flex-col h-full bg-zinc-950 text-white shadow-2xl border-l border-zinc-800">
       <app-sdui-blade-header 
-        [title]="node().title || 'Untitled Blade'" 
-        [subtitle]="node().subtitle"
+        [title]="node().props?.['title'] || 'Untitled Blade'" 
+        [subtitle]="node().props?.['subtitle']"
         (close)="bladeService.closeBlade(node().id!)" />
         
       <app-sdui-blade-content class="p-6">

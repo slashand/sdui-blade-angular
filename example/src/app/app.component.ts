@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+
 import { CommonModule } from '@angular/common';
 import { SduiBladeNode } from '@slashand/sdui-blade-core';
 import { SduiBladeHostComponent, SduiBladeService, BLADE_REGISTRY } from '../../../src/public-api';
@@ -7,7 +7,7 @@ import { SduiBladeHostComponent, SduiBladeService, BLADE_REGISTRY } from '../../
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, CommonModule, SduiBladeHostComponent],
+  imports: [CommonModule, SduiBladeHostComponent],
   template: `
     <!-- The Root Blade Host intercepts the entire viewport -->
     <app-sdui-blade-host>
@@ -40,12 +40,11 @@ export class AppComponent {
     // Simulated remote payload matching the SduiBladeNode / SduiElement schema matrix
     const manifest: SduiBladeNode = {
       id: 'demo-blade-1',
-      version: '1.0.0',
       type: 'Extension.FormBlade',
-      title: 'Azure Virtual Machine Configuration',
-      subtitle: 'eastus-prod-cluster',
-      width: 'medium',
       props: {
+        title: 'Azure Virtual Machine Configuration',
+        subtitle: 'eastus-prod-cluster',
+        width: 'medium',
         children: [
           {
             type: 'Common.Section',

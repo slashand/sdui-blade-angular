@@ -1,6 +1,6 @@
 import { Component, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { SduiElement } from '@slashand/sdui-blade-core';
+import { SduiBladeNode } from '@slashand/sdui-blade-core';
 import { SduiRendererComponent } from '../../../../src/public-api';
 
 @Component({
@@ -19,5 +19,5 @@ import { SduiRendererComponent } from '../../../../src/public-api';
   `
 })
 export class SectionComponent {
-  public readonly node = input.required<SduiElement>();
+  public readonly node = input.required<SduiBladeNode>();
 }
