@@ -6,6 +6,7 @@
 > The Flagship Sandbox. The Enterprise Angular Engine for the Agnostic Blade System, binding the core to Angular 21 Signals.
 
 ## 📖 Table of Contents
+
 - [The Immutable Flow](#the-immutable-flow)
 - [Technical Supremacy](#technical-supremacy)
 - [Installation](#installation)
@@ -14,11 +15,13 @@
 - [License](#license)
 
 ## 🛡️ The Immutable Flow
+
 `@slashand/sdui-blade-angular` is designed for the strictest enterprise environments. Leveraging Angular 21's native `@if` / `@for` control flow and Signal-based reactivity, it acts as the renderer for the abstract Schema Payload emitted by the Core Reactor.
 
 By relying on Angular Dependency Injection and native Signal computations, this wrapper maps the Core Reactor JSON AST into standalone components in real-time. It safely handles `BladeInvokeControl` slides without the overhead of massive DOM recalculations, fully supporting Analog.js Vite workspaces without the notorious "double core" `inject()` errors.
 
 ## ✨ Technical Supremacy
+
 - **The Analog APF Compliance**: Packaged perfectly via `ng-packagr` ensuring zero context injection errors when consumed across Vite workspaces.
 - **Signal-Forward Orchestration**: Receives downstream core mutations natively as Signals (`computed()`, `input()`), preventing entire component trees from re-evaluating unnecessarily.
 - **Component Outlet Agnosticism**: Securely handles the `NgComponentOutlet` lifecycle, safely disposing of memory and event listeners the second a backend instruction deletes a component node.
@@ -28,6 +31,7 @@ By relying on Angular Dependency Injection and native Signal computations, this 
 ```bash
 npm install @slashand/sdui-blade-angular @slashand/sdui-blade-core
 ```
+
 *Required Peer Dependencies:* Angular 21+, `@ngneat/elf`
 
 ## 🚀 Quickstart Usage
@@ -54,9 +58,11 @@ export class EngineRootComponent {
 ```
 
 ## 🤝 Contributing
+
 Open source contributions are highly encouraged for optimizing Signal rendering and APF build configurations. Open an issue or submit a Pull Request.
 
 ## 🌟 Ecosystem Showcase
+
 *Where can you see the Agnostic Blade System in action?*
 
 - **Gravity English** (Coming Soon, March 2026) -> Educational Prompt-Orchestration Platform.
@@ -65,12 +71,14 @@ Open source contributions are highly encouraged for optimizing Signal rendering 
 *Live production applications utilizing these blades will be showcased here as their respective websites officially launch.*
 
 ## 🗺️ Angular Ecosystem Roadmap
+
 Our specific trajectory for the Angular wrapper.
 
-- [x] **Angular 21 Native Signals Integration**
-- [x] **Analog.js APF Strict Compliance**
+- [X] **Angular 21 Native Signals Integration**
+- [X] **Analog.js APF Strict Compliance**
 - [ ] *Component Outlet Memory optimizations*
 - [ ] *Server-Side Rendering (SSR) Hydration Lock bypass*
 
 ## 📜 License
+
 Published under the [MIT License](LICENSE). Maintained by **Slashand Studio**.
