@@ -13,6 +13,8 @@
     "angular",
     "blade-system",
     "json-ui",
+    "azure-portal",
+    "ibiza-shell",
     "micro-frontends",
     "journey-protocol"
   ],
