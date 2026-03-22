@@ -2,18 +2,31 @@
   "name": "@slashand/sdui-blade-angular",
   "version": "1.0.2-alpha.0",
   "description": "Angular v21 SDUI rendering wrapper for the Agnostic Blade System.",
+  "author": "Slashand Studio",
+  "license": "MIT",
+  "keywords": [
+    "sdui",
+    "server-driven-ui",
+    "angular",
+    "blade-system",
+    "json-ui"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/slashand/sdui-blade-angular.git"
   },
+  "bugs": {
+    "url": "https://github.com/slashand/sdui-blade-angular/issues"
+  },
+  "homepage": "https://github.com/slashand/sdui-blade-angular#readme",
   "publishConfig": {
     "access": "public"
   },
   "scripts": {
     "build": "ng-packagr -p ng-package.json",
     "test": "vitest run",
-    "publish:alpha": "npm version prerelease --preid=alpha && npm run build && npm publish ./dist --tag alpha",
-    "publish:prod": "npm version patch && npm run build && npm publish ./dist"
+    "publish:alpha": "npm version prerelease --preid=alpha --no-git-tag-version && npm run build && npm publish ./dist --tag alpha",
+    "publish:prod": "npm version patch --no-git-tag-version && npm run build && npm publish ./dist"
   },
   "peerDependencies": {
     "@angular/common": "^21.0.0",
