@@ -1,6 +1,6 @@
 import { Component, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { SduiBladeNode } from '@slashand/sdui-blade-core';
+import { SduiSection } from '@slashand/sdui-blade-core';
 import { SduiRendererComponent } from '../../../../src/public-api';
 
 @Component({
@@ -8,10 +8,10 @@ import { SduiRendererComponent } from '../../../../src/public-api';
   standalone: true,
   imports: [CommonModule, SduiRendererComponent],
   template: `
-    <div class="mb-8">
-      <h2 class="text-lg font-semibold border-b border-zinc-800 pb-2 mb-4">{{ node().props?.['title'] }}</h2>
-      <div class="flex flex-col gap-4">
-        @for (child of node().props?.['children']; track $index) {
+    <div class="mb-[24px]">
+      <h2 class="text-[13px] font-semibold text-[var(--sdui-text)] mb-3">{{ node().properties?.title }}</h2>
+      <div class="flex flex-col gap-[16px]">
+        @for (child of node().children; track child.id) {
           <app-sdui-renderer [node]="child" />
         }
       </div>
@@ -19,5 +19,5 @@ import { SduiRendererComponent } from '../../../../src/public-api';
   `
 })
 export class SectionComponent {
-  public readonly node = input.required<SduiBladeNode>();
+  public readonly node = input.required<SduiSection>();
 }

@@ -1,6 +1,6 @@
 import { Component, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { SduiBladeNode } from '@slashand/sdui-blade-core';
+import { SduiAlert } from '@slashand/sdui-blade-core';
 
 @Component({
   selector: 'app-mock-alert',
@@ -8,22 +8,22 @@ import { SduiBladeNode } from '@slashand/sdui-blade-core';
   imports: [CommonModule],
   template: `
     <div class="p-4 rounded border text-sm" [class]="computedClass()">
-      {{ node().props?.['message'] }}
+      {{ node().properties.message }}
     </div>
   `
 })
 export class AlertComponent {
-  public readonly node = input.required<SduiBladeNode>();
+  public readonly node = input.required<SduiAlert>();
   
   intent() {
-    return this.node().props?.['intent'] || 'info';
+    return this.node().properties.type || 'info';
   }
 
   computedClass() {
     switch(this.intent()) {
-      case 'warning': return 'bg-amber-500/10 border-amber-500/50 text-amber-500';
-      case 'error': return 'bg-red-500/10 border-red-500/50 text-red-500';
-      default: return 'bg-blue-500/10 border-blue-500/50 text-blue-500';
+      case 'warning': return 'bg-[var(--sdui-warning-bg)] border-[var(--sdui-warning-border)] text-[var(--sdui-warning-text)]';
+      case 'error': return 'bg-[var(--sdui-error-bg)] border-[var(--sdui-error-border)] text-[var(--sdui-error-text)]';
+      default: return 'bg-[var(--sdui-info-bg)] border-[var(--sdui-info-border)] text-[var(--sdui-info-text)]';
     }
   }
 }
