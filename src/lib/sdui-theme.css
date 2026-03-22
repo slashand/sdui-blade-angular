@@ -1,0 +1,31 @@
+/* SDUI Blade Engine Core Variables */
+:root {
+  /* Engine Architecture Geography */
+  --sdui-panel-bg: #ffffff;
+  --sdui-border: #e5e7eb;
+  --sdui-text: #111827;
+  --sdui-text-muted: #6b7280;
+
+  /* Internal Sub-Component Theming mapped strictly to Core */
+  --th-panel-bg: var(--sdui-panel-bg);
+  --th-border: var(--sdui-border);
+  --th-text-primary: var(--sdui-text);
+  --th-text-secondary: var(--sdui-text-muted);
+  --th-element-bg: #f3f4f6;
+  /* Content Width Specifications */
+  --sdui-blade-w-small: 400px;
+  --sdui-blade-w-medium: 600px;
+  --sdui-blade-w-large: 800px;
+  --sdui-blade-w-xlarge: 100%;
+}
+
+/* Native Dark Mode Fallback */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --sdui-panel-bg: #1f2937;
+    --sdui-border: #374151;
+    --sdui-text: #f9fafb;
+    --sdui-text-muted: #9ca3af;
+    --th-element-bg: #111827;
+  }
+}
