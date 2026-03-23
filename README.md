@@ -3,63 +3,27 @@
 [![npm version](https://img.shields.io/npm/v/@slashand/sdui-blade-angular.svg?style=flat-square)](https://npmjs.org/package/@slashand/sdui-blade-angular)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 
-> The Flagship Sandbox. The Enterprise Angular Engine for the Agnostic Blade System, binding the core to Angular 21 Signals.
+> The Flagship Sandbox. The Enterprise Angular Engine for the Agnostic Blade System, binding the Server-Driven UI (SDUI) core to Angular 21 Signals.
 
-## 📖 Table of Contents
+## 🗺️ Overview
 
-- [The Immutable Flow](#the-immutable-flow)
-- [Technical Supremacy](#technical-supremacy)
-- [Installation](#installation)
-- [Quickstart Usage](#quickstart-usage)
-- [Contributing](#contributing)
-- [License](#license)
+`@slashand/sdui-blade-angular` is designed for the strictest enterprise environments. Leveraging Angular 21's native control flow and Signal-based reactivity, it acts as the renderer for the abstract Schema Payload emitted by `@slashand/sdui-blade-core`. 
 
-## 🛡️ The Immutable Flow
+Unlike traditional modal libraries, the Blade Protocol maps horizontal "Journeys" without restricting the consumer's layout aesthetics, fully supporting Server-Side Rendering (SSR) via strict `isPlatformBrowser` memory guards.
 
-`@slashand/sdui-blade-angular` is designed for the strictest enterprise environments. Leveraging Angular 21's native `@if` / `@for` control flow and Signal-based reactivity, it acts as the renderer for the abstract Schema Payload emitted by the Core Reactor.
+## 📚 Documentation
 
-By relying on Angular Dependency Injection and native Signal computations, this wrapper maps the Core Reactor JSON AST into standalone components in real-time. It safely handles `BladeInvokeControl` slides without the overhead of massive DOM recalculations, fully supporting Analog.js Vite workspaces without the notorious "double core" `inject()` errors.
+The architecture and implementation of the Angular Blade System are documented rigorously in our developer guide. 
 
-## ✨ Technical Supremacy
+**[👉 Read the Official SDUI Blade Angular Documentation](./docs/000-index.md)**
 
-- **The Analog APF Compliance**: Packaged perfectly via `ng-packagr` ensuring zero context injection errors when consumed across Vite workspaces.
-- **Signal-Forward Orchestration**: Receives downstream core mutations natively as Signals (`computed()`, `input()`), preventing entire component trees from re-evaluating unnecessarily.
-- **Component Outlet Agnosticism**: Securely handles the `NgComponentOutlet` lifecycle, safely disposing of memory and event listeners the second a backend instruction deletes a component node.
-
-## 📦 Installation
-
-```bash
-npm install @slashand/sdui-blade-angular @slashand/sdui-blade-core
-```
-
-*Required Peer Dependencies:* Angular 21+, `@ngneat/elf`
-
-## 🚀 Quickstart Usage
-
-```typescript
-import { Component, inject } from '@angular/core';
-import { BladeHostComponent } from '@slashand/sdui-blade-angular';
-import { BladeOrchestratorService } from './services/blade.service';
-
-@Component({
-  selector: 'app-engine-root',
-  standalone: true,
-  imports: [BladeHostComponent],
-  template: `
-    <div class="h-screen w-screen bg-zinc-900 text-zinc-100 flex overflow-hidden">
-      <!-- The engine seamlessly mounts the Constellation Map -->
-      <app-blade-host [config]="orchestrator.activeBladeConfig()" />
-    </div>
-  `
-})
-export class EngineRootComponent {
-  readonly orchestrator = inject(BladeOrchestratorService);
-}
-```
-
-## 🤝 Contributing
-
-Open source contributions are highly encouraged for optimizing Signal rendering and APF build configurations. Open an issue or submit a Pull Request.
+### Quick Links to Chapters:
+- [001: Installation and Setup](./docs/001-installation-and-setup.md)
+- [002: Inversion of Mount Points (Registration)](./docs/002-inversion-of-mount-points.md)
+- [003: Spatial Boundaries and Mounting](./docs/003-spatial-boundaries-and-mounting.md)
+- [004: Triggering Blades](./docs/004-triggering-blades.md)
+- [005: Theming and CSS Agnosticism](./docs/005-theming-and-css-agnosticism.md)
+- [006: Accessibility and E2E Targeting](./docs/006-accessibility-and-e2e.md)
 
 ## 🌟 Ecosystem Showcase
 
@@ -76,9 +40,16 @@ Our specific trajectory for the Angular wrapper.
 
 - [X] **Angular 21 Native Signals Integration**
 - [X] **Analog.js APF Strict Compliance**
+- [X] **WAI-ARIA & Native Keyboard Hooks**
+- [X] **Zero Naked Elements (E2E Compliant)**
+- [X] **Spatial Boundaries (Targeted Regions)**
 - [ ] *Component Outlet Memory optimizations*
 - [ ] *Server-Side Rendering (SSR) Hydration Lock bypass*
 
 ## 📜 License
 
 Published under the [MIT License](LICENSE). Maintained by **Slashand Studio**.
+
+---
+
+*Open-source protocol. Fully audited for WCAG AA compliance and SSR Safety.*
