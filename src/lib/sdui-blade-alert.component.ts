@@ -23,10 +23,10 @@ export class SduiBladeAlertComponent {
   
   readonly computedClass = computed(() => {
     const bgClasses = {
-      error: 'bg-red-500/10 border-red-500/20 text-red-400',
-      warning: 'bg-yellow-500/10 border-yellow-500/20 text-yellow-400',
-      info: 'bg-blue-500/10 border-blue-500/20 text-blue-400',
-      success: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+      error: 'bg-[var(--sdui-error-bg)] border-[var(--sdui-error-border)] text-[var(--sdui-error-text)]',
+      warning: 'bg-[var(--sdui-warning-bg)] border-[var(--sdui-warning-border)] text-[var(--sdui-warning-text)]',
+      info: 'bg-[var(--sdui-info-bg)] border-[var(--sdui-info-border)] text-[var(--sdui-info-text)]',
+      success: 'bg-[var(--sdui-success-bg)] border-[var(--sdui-success-border)] text-[var(--sdui-success-text)]'
     };
     return `sdui-blade-alert flex items-start p-3 mb-4 rounded-md border ${bgClasses[this.type()]}`;
   });

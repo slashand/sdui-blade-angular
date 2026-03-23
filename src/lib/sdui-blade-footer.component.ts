@@ -1,13 +1,19 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
 @Component({
   selector: 'sdui-blade-footer',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="flex-shrink-0 bg-[var(--th-panel-bg)] border-t border-[var(--th-border)] px-[20px] py-[15px] flex items-center justify-end z-10 w-full shadow-[0_-10px_20px_rgba(0,0,0,0.2)]">
+    <div
+      class="flex-shrink-0 bg-[var(--sdui-panel-bg)] px-[24px] py-[16px] flex items-center justify-start gap-2 z-10 w-full"
+      [class.border-t]="showBorder()"
+      [class.border-[var(--sdui-border)]]="showBorder()"
+    >
       <ng-content></ng-content>
     </div>
   `
 })
-export class SduiBladeFooterComponent {}
+export class SduiBladeFooterComponent {
+  readonly showBorder = input<boolean>(false);
+}
