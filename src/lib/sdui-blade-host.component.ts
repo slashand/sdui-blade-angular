@@ -18,13 +18,14 @@ import { SduiBladeService } from './sdui-blade.service';
         <ng-content></ng-content>
       </div>
 
-      <!-- JOURNEY PROTOCOL: HORIZONTAL X-AXIS STACKING -->
+      <!-- JOURNEY PROTOCOL: Z-AXIS RIGHT-ANCHORED OVERLAPPING -->
       @if (bladeService.hasActiveBlades()) {
-        <div #scrollContainer class="absolute inset-0 overflow-x-auto overflow-y-hidden z-[100] flex flex-row scroll-smooth pointer-events-none">
+        <div #scrollContainer class="absolute inset-0 overflow-hidden z-[100] pointer-events-none">
           @for (blade of bladeService.activeBlades(); track blade.id; let i = $index) {
             <div 
-              class="h-full border-l border-[var(--sdui-border)] bg-[var(--sdui-panel-bg)] flex flex-col relative transition-all duration-300 shadow-2xl pointer-events-auto"
-              [class.ml-auto]="i === 0"
+              class="absolute top-0 bottom-0 right-0 border-l border-[var(--sdui-border)] bg-[var(--sdui-panel-bg)] flex flex-col transition-all duration-300 pointer-events-auto"
+              [style.z-index]="10 + i"
+              [style.box-shadow]="i > 0 ? '-10px 0 25px rgba(0, 0, 0, 0.4)' : 'none'"
               [ngClass]="getBladeClasses(blade)"
               [ngStyle]="getBladeInlineStyle(blade)"
             >
