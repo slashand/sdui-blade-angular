@@ -5,42 +5,35 @@ import { ChangeDetectionStrategy, Component, input, output } from '@angular/core
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="sdui-blade-header sticky top-0 bg-[var(--sdui-panel-bg)] z-20 pt-[11px] px-[16px] pb-[11px] shrink-0 border-b border-[var(--sdui-border)] relative flex flex-col gap-[11px]">
-      <!-- ROW 1: Title & Toolbar -->
-      <div class="sdui-blade-title-row flex items-start justify-between">
-        <div class="sdui-blade-title-group flex items-center gap-[8px]">
-          <!-- ICON SLOT -->
-          <ng-content select="[icon]"></ng-content>
-          <div class="sdui-blade-text flex flex-col">
-            <h2 class="text-[17px] font-semibold tracking-normal text-[var(--sdui-text)] leading-none">{{ title() }}</h2>
-            @if (subtitle()) {
-              <p class="text-[12px] text-[var(--sdui-muted)] mt-1 leading-none">{{ subtitle() }}</p>
-            }
-          </div>
-        </div>
-        
-        <div class="sdui-blade-toolbar flex items-center gap-2 pr-[24px]">
-          <!-- COMMANDS SHELF (AZURE RIGHT TOOLBAR: Pin, Feedback) -->
-          <ng-content select="[toolbar]"></ng-content>
+    <div class="sdui-blade-header sticky top-0 bg-[var(--th-panel-bg,#1e293b)]/90 backdrop-blur z-10 border-b border-[var(--th-border,#334155)] min-h-[64px] px-[20px] shrink-0 flex items-center justify-between">
+      <div class="sdui-blade-title flex items-center gap-3">
+        <!-- ICON SLOT -->
+        <ng-content select="[icon]"></ng-content>
+        <div class="sdui-blade-title-text-group flex flex-col">
+          <h2 class="sdui-blade-title-text text-lg font-bold tracking-tight text-[var(--th-text-primary,#f8fafc)] leading-tight">{{ title() }}</h2>
+          @if (subtitle()) {
+            <p class="sdui-blade-subtitle-text text-xs text-[var(--th-text-secondary,#94a3b8)] mt-0.5">{{ subtitle() }}</p>
+          }
         </div>
       </div>
       
-      <!-- ROW 2: Primary Action Bar -->
-      <div class="sdui-blade-actions flex items-center gap-4 text-[13px]">
-        <!-- AZURE COMMAND BAR (Refresh, Delete, Add tags) -->
-        <ng-content select="[action-bar]"></ng-content>
+      <div class="sdui-blade-actions flex items-center gap-3">
+        <!-- COMMANDS SHELF -->
+        <div class="sdui-blade-commands flex items-center gap-2 border-r border-[var(--th-border,#334155)] pr-3 mr-1 empty:hidden">
+            <ng-content select="[commands]"></ng-content>
+        </div>
+        
         <ng-content></ng-content>
+        
+        @if (showClose()) {
+          <button 
+            (click)="close.emit()"
+            class="sdui-blade-close p-1.5 rounded-md hover:bg-[var(--th-element-bg,#475569)] text-[var(--th-text-secondary,#94a3b8)] hover:text-[var(--th-text-primary,#f8fafc)] transition-colors cursor-pointer"
+            aria-label="Close Blade">
+              <svg class="sdui-blade-close-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path class="sdui-blade-close-icon-path-1" d="M18 6 6 18"/><path class="sdui-blade-close-icon-path-2" d="m6 6 12 12"/></svg>
+          </button>
+        }
       </div>
-
-      <!-- ABSOLUTE CLOSE BUTTON (AZURE SPEC) -->
-      @if (showClose()) {
-        <button 
-          (click)="close.emit()"
-          class="sdui-blade-close absolute top-[11px] right-[11px] p-[2px] rounded-[2px] text-[var(--sdui-muted)] hover:bg-[var(--sdui-border)] hover:text-[var(--sdui-text)] transition-colors cursor-pointer"
-          aria-label="Close Blade">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-        </button>
-      }
     </div>
   `
 })

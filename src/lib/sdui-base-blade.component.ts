@@ -30,6 +30,6 @@ export class SduiBaseBladeComponent {
 
   readonly computedClass = computed(() => {
     const sizeClass = bladeSizeClasses[this.size()];
-    return `flex flex-col h-full bg-[var(--th-panel-bg)] text-[var(--th-text-primary)] shadow-2xl border-l border-[var(--th-border)] ml-auto overflow-hidden ${sizeClass} ${this.customClass()}`;
+    return `sdui-base-blade-container flex flex-col h-full bg-[var(--th-panel-bg)] text-[var(--th-text-primary)] shadow-2xl border-l border-[var(--th-border)] ml-auto overflow-hidden ${sizeClass} ${this.customClass()}`;
   });
 }
