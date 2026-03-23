@@ -8,11 +8,11 @@ export type BladeAlertType = 'error' | 'warning' | 'info' | 'success';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div [class]="computedClass()">
-      <div class="flex flex-col">
+      <div class="sdui-blade-alert-content flex flex-col">
         @if (title()) {
-          <h4 class="font-semibold text-sm mb-0.5">{{ title() }}</h4>
+          <h4 class="sdui-blade-alert-title font-semibold text-sm mb-0.5">{{ title() }}</h4>
         }
-        <div class="text-sm opacity-90"><ng-content></ng-content></div>
+        <div class="sdui-blade-alert-message text-sm opacity-90"><ng-content></ng-content></div>
       </div>
     </div>
   `
@@ -20,7 +20,7 @@ export type BladeAlertType = 'error' | 'warning' | 'info' | 'success';
 export class SduiBladeAlertComponent {
   readonly type = input<BladeAlertType>('info');
   readonly title = input<string>();
-  
+
   readonly computedClass = computed(() => {
     const bgClasses = {
       error: 'bg-red-500/10 border-red-500/20 text-red-400',
