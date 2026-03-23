@@ -1,18 +1,1 @@
 /* You can add global styles to this file, and also import other style files */
-@import "tailwindcss";
-@source "../../src/lib";
-
-/* Import the definitive Library Theme */
-@import "../../src/lib/sdui-theme.css";
-
-/* Sandbox Customization Layer */
-:root {
-  /* Application Canvas background (Outside the blades) */
-  --sdui-bg: #f3f4f6;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --sdui-bg: #111827;
-  }
-}
