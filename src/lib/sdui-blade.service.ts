@@ -84,4 +84,8 @@ export class SduiBladeService {
     }
     this._activeBlades.set([]);
   }
+
+  setBlades(blades: SduiBladeNode[]): void {
+    this._activeBlades.set(blades as Required<SduiBladeNode>[]);
+  }
 }
