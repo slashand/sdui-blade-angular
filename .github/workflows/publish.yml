@@ -29,3 +29,5 @@ jobs:
 
       - name: Publish to NPM (Prerelease)
         run: npm publish ./dist/sdui-blade-angular --access public --tag alpha --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
