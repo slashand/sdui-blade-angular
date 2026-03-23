@@ -1,4 +1,4 @@
-import { Component, effect, inject, OnInit } from '@angular/core';
+import { Component, effect, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 
 import { CommonModule } from '@angular/common';
@@ -27,52 +27,76 @@ import { BLADE_REGISTRY, SduiBladeHostComponent, SduiBladeService } from '../../
 
       <div class="flex flex-1 overflow-hidden relative">
         <!-- Collapsible Sidebar -->
-        <nav class="w-64 shrink-0 border-r border-[var(--sdui-border)] bg-[var(--sdui-panel-bg)] flex flex-col z-10 shadow-lg transition-all duration-300">
+        <nav 
+          [class.w-[180px]]="sidebarExpanded()" 
+          [class.w-[50px]]="!sidebarExpanded()" 
+          class="shrink-0 border-r border-[var(--sdui-border)] bg-[var(--sdui-panel-bg)] flex flex-col justify-between z-10 shadow-lg transition-all duration-300 overflow-hidden">
+          
           <ul class="flex flex-col w-full py-4">
-            <li class="px-5 py-2 uppercase text-[11px] font-bold tracking-wider text-[var(--sdui-muted)]/70">Blade Sizing Specs</li>
+            @if (sidebarExpanded()) {
+              <li class="px-5 py-2 uppercase text-[11px] font-bold tracking-wider text-[var(--sdui-muted)]/70 whitespace-nowrap">Blade Sizing Specs</li>
+            } @else {
+              <li class="px-[13px] py-2 uppercase text-[11px] font-bold tracking-wider text-[var(--sdui-muted)]/70 flex justify-center w-full">BS</li>
+            }
+
             <li>
               <a [routerLink]="[]" [queryParams]="{ b: 'demo-blade-full' }" 
                  routerLinkActive="bg-[var(--sdui-border)] text-[var(--sdui-text)] font-semibold border-l-2 border-[var(--sdui-primary)]" 
-                 class="block px-5 py-[8px] text-[13px] text-[var(--sdui-muted)] transition-colors hover:bg-[var(--sdui-border)] hover:text-[var(--sdui-text)] border-l-2 border-transparent">
-                Full-Width (Default)
+                 class="flex items-center gap-[12px] px-[16px] py-[10px] text-[13px] text-[var(--sdui-muted)] transition-colors hover:bg-[var(--sdui-border)] hover:text-[var(--sdui-text)] border-l-2 border-transparent hover:underline overflow-hidden whitespace-nowrap">
+                <svg class="shrink-0 text-[16px]" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+                <span [class.opacity-0]="!sidebarExpanded()" class="transition-opacity duration-200">Full-Width (Default)</span>
               </a>
             </li>
             <li>
               <a [routerLink]="[]" [queryParams]="{ b: 'demo-blade-xlarge' }" 
                  routerLinkActive="bg-[var(--sdui-border)] text-[var(--sdui-text)] font-semibold border-l-2 border-[var(--sdui-primary)]" 
-                 class="block px-5 py-[8px] text-[13px] text-[var(--sdui-muted)] transition-colors hover:bg-[var(--sdui-border)] hover:text-[var(--sdui-text)] border-l-2 border-transparent">
-                X-Large (1125px)
+                 class="flex items-center gap-[12px] px-[16px] py-[10px] text-[13px] text-[var(--sdui-muted)] transition-colors hover:bg-[var(--sdui-border)] hover:text-[var(--sdui-text)] border-l-2 border-transparent overflow-hidden whitespace-nowrap">
+                <svg class="shrink-0 text-[16px]" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="16" y1="4" x2="16" y2="20"/></svg>
+                <span [class.opacity-0]="!sidebarExpanded()" class="transition-opacity duration-200">X-Large (1125px)</span>
               </a>
             </li>
             <li>
               <a [routerLink]="[]" [queryParams]="{ b: 'demo-blade-large' }" 
                  routerLinkActive="bg-[var(--sdui-border)] text-[var(--sdui-text)] font-semibold border-l-2 border-[var(--sdui-primary)]" 
-                 class="block px-5 py-[8px] text-[13px] text-[var(--sdui-muted)] transition-colors hover:bg-[var(--sdui-border)] hover:text-[var(--sdui-text)] border-l-2 border-transparent">
-                Large (855px)
+                 class="flex items-center gap-[12px] px-[16px] py-[10px] text-[13px] text-[var(--sdui-muted)] transition-colors hover:bg-[var(--sdui-border)] hover:text-[var(--sdui-text)] border-l-2 border-transparent overflow-hidden whitespace-nowrap">
+                <svg class="shrink-0 text-[16px]" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><line x1="14" y1="4" x2="14" y2="20"/></svg>
+                <span [class.opacity-0]="!sidebarExpanded()" class="transition-opacity duration-200">Large (855px)</span>
               </a>
             </li>
             <li>
               <a [routerLink]="[]" [queryParams]="{ b: 'demo-blade-medium' }" 
                  routerLinkActive="bg-[var(--sdui-border)] text-[var(--sdui-text)] font-semibold border-l-2 border-[var(--sdui-primary)]" 
-                 class="block px-5 py-[8px] text-[13px] text-[var(--sdui-muted)] transition-colors hover:bg-[var(--sdui-border)] hover:text-[var(--sdui-text)] border-l-2 border-transparent">
-                Medium (585px)
+                 class="flex items-center gap-[12px] px-[16px] py-[10px] text-[13px] text-[var(--sdui-muted)] transition-colors hover:bg-[var(--sdui-border)] hover:text-[var(--sdui-text)] border-l-2 border-transparent overflow-hidden whitespace-nowrap">
+                <svg class="shrink-0 text-[16px]" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="3" x2="12" y2="21"/></svg>
+                <span [class.opacity-0]="!sidebarExpanded()" class="transition-opacity duration-200">Medium (585px)</span>
               </a>
             </li>
              <li>
               <a [routerLink]="[]" [queryParams]="{ b: 'demo-blade-small' }" 
                  routerLinkActive="bg-[var(--sdui-border)] text-[var(--sdui-text)] font-semibold border-l-2 border-[var(--sdui-primary)]" 
-                 class="block px-5 py-[8px] text-[13px] text-[var(--sdui-muted)] transition-colors hover:bg-[var(--sdui-border)] hover:text-[var(--sdui-text)] border-l-2 border-transparent">
-                Small (315px)
+                 class="flex items-center gap-[12px] px-[16px] py-[10px] text-[13px] text-[var(--sdui-muted)] transition-colors hover:bg-[var(--sdui-border)] hover:text-[var(--sdui-text)] border-l-2 border-transparent overflow-hidden whitespace-nowrap">
+                <svg class="shrink-0 text-[16px]" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="12" height="16" rx="2"/><line x1="10" y1="4" x2="10" y2="20"/></svg>
+                <span [class.opacity-0]="!sidebarExpanded()" class="transition-opacity duration-200">Small (315px)</span>
               </a>
             </li>
             <li>
               <a [routerLink]="[]" [queryParams]="{ b: 'demo-blade-menu' }" 
                  routerLinkActive="bg-[var(--sdui-border)] text-[var(--sdui-text)] font-semibold border-l-2 border-[var(--sdui-primary)]" 
-                 class="block px-5 py-[8px] text-[13px] text-[var(--sdui-muted)] transition-colors hover:bg-[var(--sdui-border)] hover:text-[var(--sdui-text)] border-l-2 border-transparent">
-                Menu (265px)
+                 class="flex items-center gap-[12px] px-[16px] py-[10px] text-[13px] text-[var(--sdui-muted)] transition-colors hover:bg-[var(--sdui-border)] hover:text-[var(--sdui-text)] border-l-2 border-transparent overflow-hidden whitespace-nowrap">
+                <svg class="shrink-0 text-[16px]" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                <span [class.opacity-0]="!sidebarExpanded()" class="transition-opacity duration-200">Menu (265px)</span>
               </a>
             </li>
           </ul>
+
+          <div class="p-2 border-t border-[var(--sdui-border)] flex" [class.justify-end]="sidebarExpanded()" [class.justify-center]="!sidebarExpanded()">
+            <button 
+              (click)="sidebarExpanded.set(!sidebarExpanded())"
+              class="p-2 rounded hover:bg-[var(--sdui-border)] text-[var(--sdui-muted)] hover:text-[var(--sdui-text)] transition-colors text-xs font-bold font-mono tracking-widest cursor-pointer"
+              title="Toggle Sidebar">
+              {{ sidebarExpanded() ? '<<' : '>>' }}
+            </button>
+          </div>
         </nav>
 
         <!-- Main Content Area Wrapped by SDUI Blade Host! -->
@@ -103,6 +127,8 @@ export class AppComponent implements OnInit {
   private readonly bladeService = inject(SduiBladeService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+
+  public readonly sidebarExpanded = signal(true);
 
   private isHydrating = true;
 
@@ -178,18 +204,18 @@ export class AppComponent implements OnInit {
   }
 
   private initializeMockDb() {
-    
+
     const fullManifest: SduiBladeNode = {
       id: 'demo-blade-full',
       type: SduiElementType.Blade,
       properties: { title: 'Full Width (Responsive)', subtitle: 'flex-1' } as any,
       children: [
-        { 
-          id: 's1', type: SduiElementType.Section, properties: { title: 'Behavior' }, 
+        {
+          id: 's1', type: SduiElementType.Section, properties: { title: 'Behavior' },
           children: [
             { id: 't1', type: 'MOCK_TEXT' as any, properties: { content: 'This blade claims all available horizontal space (flex-1). It acts as a powerful root Dashboard.' } },
             { id: 'btn-sub', type: 'MOCK_BUTTON' as any, properties: { label: '＋ Spawn Large Blade', actionPayload: { id: 'demo-blade-large' } } }
-          ] 
+          ]
         }
       ]
     };
@@ -199,12 +225,12 @@ export class AppComponent implements OnInit {
       type: SduiElementType.Blade,
       properties: { title: 'X-Large Constraint', width: 'xlarge' } as any,
       children: [
-        { 
-          id: 's2', type: SduiElementType.Section, properties: { title: '1125px Structural Limit' }, 
+        {
+          id: 's2', type: SduiElementType.Section, properties: { title: '1125px Structural Limit' },
           children: [
             { id: 't2', type: 'MOCK_TEXT' as any, properties: { content: 'Perfect for wide data grids or complex configuration wizards.' } },
             { id: 'btn2', type: 'MOCK_BUTTON' as any, properties: { label: '＋ Nested Large Blade', actionPayload: { id: 'demo-blade-large' } } }
-          ] 
+          ]
         }
       ]
     };
@@ -214,12 +240,12 @@ export class AppComponent implements OnInit {
       type: SduiElementType.Blade,
       properties: { title: 'Large Constraint', width: 'large' } as any,
       children: [
-        { 
-          id: 's3', type: SduiElementType.Section, properties: { title: '855px Structural Limit' }, 
+        {
+          id: 's3', type: SduiElementType.Section, properties: { title: '855px Structural Limit' },
           children: [
             { id: 't3', type: 'MOCK_TEXT' as any, properties: { content: 'The standard architectural width for primary resource overviews.' } },
             { id: 'btn3', type: 'MOCK_BUTTON' as any, properties: { label: '＋ Nested Medium Blade', actionPayload: { id: 'demo-blade-medium' } } }
-          ] 
+          ]
         }
       ]
     };
@@ -229,12 +255,12 @@ export class AppComponent implements OnInit {
       type: SduiElementType.Blade,
       properties: { title: 'Medium Constraint', width: 'medium' } as any,
       children: [
-        { 
-          id: 's4', type: SduiElementType.Section, properties: { title: '585px Structural Limit' }, 
+        {
+          id: 's4', type: SduiElementType.Section, properties: { title: '585px Structural Limit' },
           children: [
             { id: 't4', type: 'MOCK_TEXT' as any, properties: { content: 'The classic side-panel width used for deep configuration forms or tagging.' } },
             { id: 'btn4', type: 'MOCK_BUTTON' as any, properties: { label: '＋ Nested Small Blade', actionPayload: { id: 'demo-blade-small' } } }
-          ] 
+          ]
         }
       ]
     };
@@ -244,12 +270,12 @@ export class AppComponent implements OnInit {
       type: SduiElementType.Blade,
       properties: { title: 'Small Constraint', width: 'small' } as any,
       children: [
-        { 
-          id: 's5', type: SduiElementType.Section, properties: { title: '315px Structural Limit' }, 
+        {
+          id: 's5', type: SduiElementType.Section, properties: { title: '315px Structural Limit' },
           children: [
             { id: 't5', type: 'MOCK_TEXT' as any, properties: { content: 'Used for tiny flyouts or quick action menus.' } },
             { id: 'btn5', type: 'MOCK_BUTTON' as any, properties: { label: '＋ Nested Menu Blade', actionPayload: { id: 'demo-blade-menu' } } }
-          ] 
+          ]
         }
       ]
     };
@@ -259,11 +285,11 @@ export class AppComponent implements OnInit {
       type: SduiElementType.Blade,
       properties: { title: 'Menu Constraint', width: 'menu' } as any,
       children: [
-        { 
-          id: 's6', type: SduiElementType.Section, properties: { title: '265px Structural Limit' }, 
+        {
+          id: 's6', type: SduiElementType.Section, properties: { title: '265px Structural Limit' },
           children: [
             { id: 't6', type: 'MOCK_TEXT' as any, properties: { content: 'The absolute thinnest blade form-factor, strictly for tertiary navigation arrays.' } }
-          ] 
+          ]
         }
       ]
     };
