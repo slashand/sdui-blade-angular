@@ -1,5 +1,5 @@
-import { CommonModule, NgComponentOutlet } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject, OnInit, signal, Type, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
+import { CommonModule, isPlatformBrowser, NgComponentOutlet } from '@angular/common';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, OnInit, PLATFORM_ID, signal, computed, input, Type } from '@angular/core';
 import { BLADE_REGISTRY } from './sdui-blade-registry';
 import { SduiBladeService } from './sdui-blade.service';
 
@@ -9,29 +9,35 @@ import { SduiBladeService } from './sdui-blade.service';
   imports: [CommonModule, NgComponentOutlet],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
-    class: 'block w-full h-full relative'
+    'class': 'block w-full h-full relative',
+    '(document:keydown.escape)': 'onEscapeKey()'
   },
   template: `
-    <div class="relative w-full h-full flex overflow-hidden">
+    <div class="sdui-blade-host-root relative w-full h-full flex overflow-hidden">
       <!-- MAIN APP CONTENT (ROUTER OUTLET) -->
-      <div class="flex-1 relative z-0 overflow-hidden flex flex-col">
-        <ng-content></ng-content>
-      </div>
+      <ng-content></ng-content>
 
-      <!-- JOURNEY PROTOCOL: Z-AXIS RIGHT-ANCHORED OVERLAPPING -->
-      @if (bladeService.hasActiveBlades()) {
-        <div #scrollContainer class="absolute inset-0 overflow-hidden z-[100] pointer-events-none">
-          @for (blade of bladeService.activeBlades(); track blade.id; let i = $index) {
+      @if (hasBladesForRegion()) {
+        <div class="sdui-blade-host-overlay absolute inset-0 w-full h-full flex overflow-hidden z-[100] pointer-events-auto">
+          <!-- Render Blades via for loop targeted to this region -->
+          @for (blade of bladesForThisRegion(); track blade.id; let i = $index) {
             <div 
-              class="absolute top-0 bottom-0 right-0 border-l border-[var(--sdui-border)] bg-[var(--sdui-panel-bg)] flex flex-col transition-all duration-300 pointer-events-auto"
-              [style.z-index]="10 + i"
-              [style.box-shadow]="i > 0 ? '-10px 0 25px rgba(0, 0, 0, 0.4)' : 'none'"
-              [ngClass]="getBladeClasses(blade)"
-              [ngStyle]="getBladeInlineStyle(blade)"
+              class="sdui-blade-host-instance absolute inset-0 flex flex-col pointer-events-none transition-transform duration-300 ease-out"
+              [style.zIndex]="10 + i"
+              role="dialog"
+              aria-modal="false"
+              [attr.aria-label]="blade.properties?.title || 'Slide-out panel'"
             >
-              @if (resolvedComponents()[blade.type]) {
-                <ng-container *ngComponentOutlet="resolvedComponents()[blade.type]!; inputs: { node: blade }"></ng-container>
-              }
+              <!-- Wrapper enforcing rigid SDUI constraints, mimicking the framer-motion approach -->
+              <div class="sdui-blade-host-scroll-boundary flex-1 overflow-auto no-scrollbar relative z-0 pointer-events-auto flex flex-col"
+                   [class]="i === 0 ? '[&>*]:!w-full [&>*]:!max-w-none [&>*]:!ml-0 [&>*]:!border-l-0 [&>*]:!rounded-none' : ''"
+              >
+                @if (resolvedComponents()[blade.type]) {
+                  <ng-container *ngComponentOutlet="resolvedComponents()[blade.type]!; inputs: { node: blade }"></ng-container>
+                } @else {
+                  <ng-content select="[fallback-loader]"></ng-content>
+                }
+              </div>
             </div>
           }
         </div>
@@ -39,80 +45,62 @@ import { SduiBladeService } from './sdui-blade.service';
     </div>
   `
 })
-export class SduiBladeHostComponent implements OnInit, AfterViewChecked {
+export class SduiBladeHostComponent implements OnInit {
+  region = input<string>('global');
   protected bladeService = inject(SduiBladeService);
   protected resolvedComponents = signal<Record<string, Type<unknown>>>({});
   
-  @ViewChild('scrollContainer') private scrollContainer!: ElementRef<HTMLDivElement>;
-  private previousBladeCount = 0;
+  protected bladesForThisRegion = computed(() => {
+    return this.bladeService.activeBlades().filter((b: any) => {
+      // If a blade specifies no region, it defaults to 'global'
+      const bladeRegion = b.properties?.region || 'global';
+      return bladeRegion === this.region();
+    });
+  });
 
-  public getBladeClasses(blade: any): string {
-    const w = blade.properties?.['width'] as string | undefined;
-    
-    // Azure Specific Framework Default Mappings 
-    // Uses max-width so they act rigidly at desktop size but can gracefully shrink if forced on smaller viewports.
-    switch (w) {
-      case 'menu': return 'w-full max-w-[265px] shrink-0';
-      case 'small': return 'w-full max-w-[315px] shrink-0';
-      case 'normal': 
-      case 'medium': return 'w-full max-w-[585px] shrink-0';
-      case 'large': return 'w-full max-w-[855px] shrink-0';
-      case 'xlarge': return 'w-full max-w-[1125px] shrink-0';
-      case 'full':
-      default:
-        // Default or implicit 'full' acts as a strict full-screen grid base.
-        return 'w-full shrink-0 min-w-[320px]';
-    }
-  }
+  protected hasBladesForRegion = computed(() => this.bladesForThisRegion().length > 0);
 
-  // To support legacy inline number properties if passed:
-  public getBladeInlineStyle(blade: any) {
-    const w = blade.properties?.['width'];
-    if (typeof w === 'number') return { 'width': `${w}px` };
-    return {};
-  }
+  private readonly platformId = inject(PLATFORM_ID);
+  private readonly destroyRef = inject(DestroyRef);
 
   ngOnInit() {
     // A simplified effect tracking un-resolved component types and triggering lazy loads.
-    setInterval(() => {
-      const blades = this.bladeService.activeBlades();
+    // Ideally this uses Angular's upcoming `import()` template native syntax, 
+    // but for now we manually ingest the registry loaders.
+    if (isPlatformBrowser(this.platformId)) {
+      const intervalId = setInterval(() => {
+        const blades = this.bladesForThisRegion();
       const currentRes = this.resolvedComponents();
 
       let needsUpdate = false;
       const newRes = { ...currentRes };
 
-      for (const b of blades) {
-        if (!newRes[b.type]) {
-          const loader = BLADE_REGISTRY.getLoader(b.type);
+      for (const bladeNode of blades) {
+        if (!newRes[bladeNode.type]) {
+          const loader = BLADE_REGISTRY.getLoader(bladeNode.type);
           if (loader) {
             needsUpdate = true;
-            loader().then(comp => {
-              this.resolvedComponents.update(v => ({ ...v, [b.type]: comp }));
+            loader().then(component => {
+              this.resolvedComponents.update((registry: Record<string, Type<unknown>>) => ({ ...registry, [bladeNode.type]: component }));
             });
           } else {
-            console.warn(`[SDUI Blade Engine] No Angular component registered for JSON type: '${b.type}'`);
+            console.warn(`[SDUI Blade Engine] No Angular component registered for JSON type: '${bladeNode.type}'`);
           }
         }
-      }
-    }, 100);
-  }
-
-  ngAfterViewChecked() {
-    // Auto-scroll mechanics: When a new blade is injected into the DOM, physically scroll the view to the right.
-    const currentCount = this.bladeService.activeBlades().length;
-    if (currentCount > this.previousBladeCount) {
-      this.scrollToRight();
+        }
+      }, 100); // Polling for demo, typical implementation uses explicit RxJS subjects on state changes.
+      
+      this.destroyRef.onDestroy(() => clearInterval(intervalId));
     }
-    this.previousBladeCount = currentCount;
   }
 
-  private scrollToRight() {
-    if (this.scrollContainer && this.scrollContainer.nativeElement) {
-      // Use setTimeout to ensure the DOM has fully painted the new flex child bounds before calculating scrollWidth.
-      setTimeout(() => {
-        const el = this.scrollContainer.nativeElement;
-        el.scrollTo({ left: el.scrollWidth, behavior: 'smooth' });
-      }, 50);
+  protected onEscapeKey(): void {
+    if (this.hasBladesForRegion()) {
+      const active = this.bladesForThisRegion();
+      const top = active[active.length - 1];
+      if (!top.properties?.disableClose) {
+        this.bladeService.closeTopBlade();
+      }
     }
   }
 }
