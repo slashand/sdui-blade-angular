@@ -26,7 +26,7 @@ import { BLADE_REGISTRY } from './sdui-blade-registry';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (resolvedComponent()) {
-      <ng-container *ngComponentOutlet="resolvedComponent()!; inputs: { node: node() }"></ng-container>
+      <ng-container *ngComponentOutlet="resolvedComponent()!; inputs: getComponentInputs(node())"></ng-container>
     } @else {
       <!-- Fallback gracefully into an error boundary for unmapped JSON nodes -->
       <div class="w-full text-xs text-[var(--sdui-error-text)] border border-dashed border-[var(--sdui-error-border)] p-2">
@@ -41,6 +41,13 @@ export class SduiRendererComponent {
   
   /** The actively resolved native Angular Class representing the node type */
   protected readonly resolvedComponent = signal<Type<unknown> | null>(null);
+
+  protected getComponentInputs(node: SduiNode): Record<string, unknown> {
+    return {
+      bladeId: node.id,
+      ...(node.properties || {})
+    };
+  }
 
   constructor() {
     // Whenever the input node updates (e.g. from parent state changes), re-evaluate the registry
