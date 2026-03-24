@@ -1,6 +1,6 @@
 {
   "name": "@slashand/sdui-blade-angular",
-  "version": "1.0.0-alpha.4",
+  "version": "1.0.0-alpha.5",
   "description": "Angular v21 SDUI rendering wrapper for the Agnostic Blade System.",
   "author": "Slashand Studio",
   "license": "MIT",
@@ -21,6 +21,12 @@
   "homepage": "https://github.com/slashand/sdui-blade-angular#readme",
   "publishConfig": {
     "access": "public"
+  },
+  "exports": {
+    "./src/lib/sdui-blade-theme.css": {
+      "style": "./src/lib/sdui-blade-theme.css",
+      "default": "./src/lib/sdui-blade-theme.css"
+    }
   },
   "scripts": {
     "build": "ng-packagr -p ng-package.json",
