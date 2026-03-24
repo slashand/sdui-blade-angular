@@ -1,6 +1,6 @@
 # 002: Inversion of Mount Points (Registration)
 
-The Blade Engine operates on a profound architectural principle: **The Inversion of Mount Points.** 
+The Blade Engine operates on a profound architectural principle: **The Inversion of Mount Points.**
 
 The core engine does *not* know what your User Profile or Settings view looks like. It merely receives a JSON command stating that a `user-profile` should open, along with arbitrary generic `properties`. The Angular renderer is responsible for establishing the link between that sterile string and your rich, interactive Angular Standalone Components.
 

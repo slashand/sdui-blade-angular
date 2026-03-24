@@ -28,3 +28,6 @@
 - Emulate the "Inversion of Mount Points" by registering dynamic components with the `sdui-blade-core` engine.
 - `ChangeDetectionStrategy.OnPush` is mandatory.
 - Signals are strictly preferred for tracking local state over RxJS unless composing event streams.
+
+## 5. Response Style for AI Assistants
+- **ANSWER FIRST, NEVER CODE UNPROMPTED**: When the user asks a question, you MUST answer it in conversational text. DO NOT start modifying code, running scripts, or writing files to solve the problem unless explicitly assigned a task to do so.
