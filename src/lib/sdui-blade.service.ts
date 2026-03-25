@@ -109,15 +109,20 @@ export class SduiBladeService {
     }
   }
 
+  /**
+   * Pushes a new blade onto the stack or updates the topmost blade in-place.
+   * Impact on others: Triggers `updateURLHash` which writes the exact topological hierarchy into the browser History.
+   */
   openBlade(node: SduiBladeNode): void {
     const id = node.id || `${node.type}-${Date.now()}`;
     
     this._activeBlades.update((blades: Required<SduiBladeNode>[]) => {
       const lastBlade = blades[blades.length - 1];
-      if (lastBlade && lastBlade.type === node.type) {
+      // Prevent stacking the EXACT SAME IDENTIFIER consecutively
+      if (lastBlade && lastBlade.id === id) {
         // Safe update in place, don't flood history
         const newBlades = [...blades];
-        newBlades[newBlades.length - 1] = { ...lastBlade, properties: node.properties || {} } as unknown as Required<SduiBladeNode>;
+        newBlades[newBlades.length - 1] = { ...lastBlade, properties: node.properties || {}, children: node.children || lastBlade.children } as unknown as Required<SduiBladeNode>;
         this.updateURLHash(newBlades, true);
         return newBlades;
       }
@@ -164,10 +169,25 @@ export class SduiBladeService {
     }
   }
 
+  /**
+   * Instantly overrides the entire active blade pipeline with a hardcoded topological array.
+   * Impact: This clears all existing DOM portals and replaces the History state deterministically.
+   */
   setBlades(blades: SduiBladeNode[]): void {
     const typed = blades as Required<SduiBladeNode>[];
     this._activeBlades.set(typed);
     this.updateURLHash(typed, true);
+  }
+
+  /**
+   * Formally resets the blade stack and drops a new root domain into the initial pipeline index.
+   * Impact on others: Required whenever switching Core Pillar applications (e.g., leaving Logistics for Cybersecurity).
+   */
+  setAppBlade(blade: SduiBladeNode): void {
+    const id = blade.id || `${blade.type}-${Date.now()}`;
+    const parsedBlade = { ...blade, id, properties: blade.properties || {} } as Required<SduiBladeNode>;
+    this._activeBlades.set([parsedBlade]);
+    this.updateURLHash([parsedBlade], true);
   }
 
   updateBladeProperties(id: string, properties: Partial<SduiBladeNode['properties']>): void {
