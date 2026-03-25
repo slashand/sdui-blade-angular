@@ -1,6 +1,6 @@
 {
   "name": "@slashand/sdui-blade-angular",
-  "version": "1.0.0-alpha.5",
+  "version": "1.0.0-alpha.6",
   "description": "Angular v21 SDUI rendering wrapper for the Agnostic Blade System.",
   "author": "Slashand Studio",
   "license": "MIT",
@@ -38,7 +38,7 @@
     "@angular/common": "^21.0.0",
     "@angular/core": "^21.0.0",
     "@ngneat/elf": "latest",
-    "@slashand/sdui-blade-core": "^1.0.0-alpha.3"
+    "@slashand/sdui-blade-core": "^1.0.0-alpha.4"
   },
   "devDependencies": {
     "@analogjs/vite-plugin-angular": "^2.3.1",
