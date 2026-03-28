@@ -4,3 +4,5 @@ dist/
 
 .npmrc
 package-lock.json
+.angular/
+tools/
