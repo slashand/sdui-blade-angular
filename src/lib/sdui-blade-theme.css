@@ -31,3 +31,190 @@
     --th-element-bg: #111827;
   }
 }
+
+/* =========================================================================
+   STRUCTURAL LAYOUT ENGINES (NO TAILWIND DEPENDENCY)
+   ========================================================================= */
+
+/* Host Layer */
+.sdui-blade-host {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+
+@keyframes sdui-blade-slide-in {
+  from { transform: translateX(100%); }
+}
+
+@keyframes sdui-blade-slide-out {
+  to { transform: translateX(100%); }
+}
+
+.sdui-blade-host-instance {
+  position: absolute;
+  top: 0; right: 0; bottom: 0; left: 0;
+  display: flex;
+  flex-direction: column;
+  pointer-events: none;
+}
+
+/* Animations hooks natively consumed by Angular's animate.enter and animate.leave bindings */
+.sdui-blade-enter {
+  animation: sdui-blade-slide-in var(--sdui-blade-speed, 500ms) var(--sdui-blade-easing, cubic-bezier(0.16, 1, 0.3, 1)) forwards;
+}
+
+.sdui-blade-leave {
+  animation: sdui-blade-slide-out var(--sdui-blade-speed, 500ms) var(--sdui-blade-easing, cubic-bezier(0.16, 1, 0.3, 1)) forwards !important;
+}
+
+.sdui-blade-host-instance.sdui-transient-backdrop {
+  pointer-events: auto;
+  background-color: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+.sdui-blade-host-scroll-boundary {
+  flex: 1 1 0%;
+  overflow: auto;
+  position: relative;
+  z-index: 0;
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  /* Blade structural visuals pushed to Host instead of BaseBlade */
+  background-color: var(--th-panel-bg, #1f2937);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  border-left: 1px solid var(--th-border, #374151);
+  margin-left: auto;
+}
+
+/* Hide scrollbar structurally */
+.sdui-blade-host-scroll-boundary::-webkit-scrollbar {
+  display: none;
+}
+.sdui-blade-host-scroll-boundary {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Child enforcement for the scroll boundary */
+.sdui-blade-host-scroll-boundary > * {
+  flex: 1 1 0%;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Root Index Blade Max Enforcement */
+.sdui-blade-host-instance.sdui-root-blade .sdui-blade-host-scroll-boundary > * {
+  width: 100% !important;
+  max-width: none !important;
+  margin-left: 0 !important;
+  border-left-width: 0 !important;
+  border-radius: 0 !important;
+}
+
+/* Blade Component Base Container */
+.sdui-base-blade-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: var(--th-panel-bg, #1f2937);
+  color: var(--th-text-primary, #f9fafb);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  border-left: 1px solid var(--th-border, #374151);
+  margin-left: auto;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.sdui-size-menu { width: 100%; max-width: var(--sdui-blade-w-menu, 265px); }
+.sdui-size-small { width: 100%; max-width: var(--sdui-blade-w-small, 315px); }
+.sdui-size-medium { width: 100%; max-width: var(--sdui-blade-w-medium, 585px); }
+.sdui-size-large { width: 100%; max-width: var(--sdui-blade-w-large, 855px); }
+.sdui-size-xlarge { width: 100%; max-width: var(--sdui-blade-w-xlarge, 1125px); }
+.sdui-size-full { width: 100%; flex: 1 1 0%; }
+
+/* Blade Header */
+.sdui-blade-header {
+  position: sticky;
+  top: 0;
+  background-color: color-mix(in srgb, var(--th-panel-bg, #1e293b) 90%, transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 10;
+  border-bottom: 1px solid var(--th-border, #334155);
+  min-height: 64px;
+  padding: 12px var(--sdui-blade-px, 20px);
+  flex-shrink: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
+.sdui-blade-title { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; }
+.sdui-blade-title-text-group { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.sdui-blade-title-row { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; }
+.sdui-blade-title-row:empty { display: none; }
+.sdui-blade-title-text { 
+  font-size: 1.125rem; font-weight: 700; letter-spacing: -0.025em; 
+  color: var(--th-text-primary, #f8fafc); line-height: 1.25; margin: 0; 
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+.sdui-blade-subtitle-row { display: flex; align-items: center; gap: 6px; margin-top: 2px; flex: 1; min-width: 0; }
+.sdui-blade-subtitle-row:empty { display: none; }
+.sdui-blade-subtitle-text { 
+  font-size: 0.75rem; color: var(--th-text-secondary, #94a3b8); margin: 0; 
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
+}
+
+.sdui-blade-actions { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+.sdui-blade-commands { display: flex; align-items: center; gap: 8px; border-right: 1px solid var(--th-border, #334155); padding-right: 12px; margin-right: 4px; flex-shrink: 0; }
+.sdui-blade-commands:empty { display: none; }
+
+.sdui-blade-close {
+  padding: 6px; border-radius: 6px; background: transparent; border: none;
+  color: var(--th-text-secondary, #94a3b8); cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+  display: flex; align-items: center; justify-content: center;
+}
+.sdui-blade-close:hover { background-color: var(--th-element-bg, #475569); color: var(--th-text-primary, #f8fafc); }
+
+/* Blade Content */
+.sdui-blade-content-container {
+  flex: 1 1 0%;
+  overflow-y: auto;
+  padding: 10px 20px 20px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.sdui-blade-content-container::-webkit-scrollbar { display: none; }
+.sdui-blade-content-container { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Blade Footer */
+.sdui-blade-footer-container {
+  flex-shrink: 0;
+  background-color: var(--th-panel-bg, #1e293b);
+  border-top: 1px solid var(--th-border, #334155);
+  padding: 15px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 10;
+  width: 100%;
+  box-shadow: 0 -10px 20px rgba(0, 0, 0, 0.2);
+}
+
+.sdui-blade-footer-container.sdui-align-left { justify-content: flex-start; }
+.sdui-blade-footer-container.sdui-align-right { justify-content: flex-end; }
+.sdui-blade-footer-container.sdui-align-center { justify-content: center; }
+.sdui-blade-footer-container.sdui-align-between { justify-content: space-between; }
