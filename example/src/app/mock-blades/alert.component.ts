@@ -1,5 +1,4 @@
 import { Component, input } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { SduiAlert } from '@slashand/sdui-blade-core';
 
 /**
@@ -9,7 +8,7 @@ import { SduiAlert } from '@slashand/sdui-blade-core';
 @Component({
   selector: 'app-mock-alert',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   template: `
     <div class="sdui-mock-alert p-4 rounded border text-sm" [class]="computedClass()">
       {{ node().properties.message }}

@@ -1,7 +1,6 @@
 import { Component, input } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { SduiSection } from '@slashand/sdui-blade-core';
-import { SduiRendererComponent } from '../../../../src/public-api';
+import { SduiRendererComponent } from '@slashand/sdui-blade-angular';
 
 /**
  * Structural container for rendering vertically stacked sub-layouts.
@@ -10,7 +9,7 @@ import { SduiRendererComponent } from '../../../../src/public-api';
 @Component({
   selector: 'app-mock-section',
   standalone: true,
-  imports: [CommonModule, SduiRendererComponent],
+  imports: [SduiRendererComponent],
   template: `
     <div class="sdui-mock-section-container mb-[24px]">
       <h2 class="sdui-mock-section-title text-[13px] font-semibold text-[var(--sdui-text)] mb-3">{{ node().properties?.title }}</h2>

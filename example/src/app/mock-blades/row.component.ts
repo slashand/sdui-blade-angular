@@ -1,7 +1,6 @@
 import { Component, input } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { SduiNode } from '@slashand/sdui-blade-core';
-import { SduiRendererComponent } from '../../../../src/public-api';
+import { SduiRendererComponent } from '@slashand/sdui-blade-angular';
 
 /**
  * Mathematical horizontal flex distributor for composite children.
@@ -10,7 +9,7 @@ import { SduiRendererComponent } from '../../../../src/public-api';
 @Component({
   selector: 'app-mock-row',
   standalone: true,
-  imports: [CommonModule, SduiRendererComponent],
+  imports: [SduiRendererComponent],
   template: `
     <div class="sdui-mock-row-container flex flex-row items-center gap-2">
       @for (child of node().children; track child.id) {
