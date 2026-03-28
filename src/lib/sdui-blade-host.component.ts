@@ -1,31 +1,55 @@
 import { CommonModule, isPlatformBrowser, NgComponentOutlet } from '@angular/common';
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, OnInit, PLATFORM_ID, signal, computed, input, Type } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, OnInit, PLATFORM_ID, signal, computed, input, Type, effect } from '@angular/core';
 import { BLADE_REGISTRY } from './sdui-blade-registry';
 import { SduiBladeService } from './sdui-blade.service';
+import { SduiBladeNode } from '@slashand/sdui-blade-core';
 
+/**
+ * [COMPONENT]
+ * SduiBladeHostComponent
+ * 
+ * The Root DOM Container for the structured Blade UI system. 
+ * This component listens to the active `SduiBladeService` and materializes generic JSON requests into real Angular Standalone Components.
+ * 
+ * CORE RESPONSIBILITIES:
+ * 1. Enact the "Inversion of Mount Points" by wrapping dynamically loaded Angular components in strict CSS boundaries.
+ * 2. Automate structural layout (Width constraints, z-index elevation, and overlapping offset).
+ * 3. Handle physical hardware UX interactions (Backdrop clicks, ESC key tracking).
+ * 
+ * file: src/lib/sdui-blade-host.component.ts
+ */
 @Component({
   selector: 'app-sdui-blade-host',
   standalone: true,
   imports: [CommonModule, NgComponentOutlet],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
-    'class': 'absolute inset-0 pointer-events-none z-[100] flex overflow-hidden',
+    'class': 'sdui-blade-host',
     '(document:keydown.escape)': 'onEscapeKey()'
   },
   template: `
+    <!-- The Root Application Context -->
+    <ng-content></ng-content>
+
     @if (hasBladesForRegion()) {
       @for (blade of bladesForThisRegion(); track blade.id; let bladeIndex = $index) {
         <div 
-          class="sdui-blade-host-instance absolute inset-0 flex flex-col pointer-events-none transition-transform duration-300 ease-out"
+          class="sdui-blade-host-instance"
+          animate.enter="sdui-blade-enter"
+          animate.leave="sdui-blade-leave"
+          [class.sdui-root-blade]="bladeIndex === 0"
+          [class.sdui-transient-backdrop]="isTransient(blade)"
           [style.zIndex]="10 + bladeIndex"
+          [style.transform]="bladeIndex === bladesForThisRegion().length - 1 ? 'translateX(0%)' : 'translateX(0%)'"
           role="dialog"
           aria-modal="false"
-          [attr.aria-label]="blade.properties?.title || 'Slide-out panel'"
+          [attr.aria-label]="blade.properties.title || 'Slide-out panel'"
+          (click)="onBackdropClick($event, blade, bladeIndex)"
         >
           <!-- Wrapper enforcing rigid SDUI constraints, mimicking the framer-motion approach -->
-          <div class="sdui-blade-host-scroll-boundary flex-1 overflow-auto no-scrollbar relative z-0 pointer-events-auto flex flex-col"
-               [class]="bladeIndex === 0 ? '[&>*]:!w-full [&>*]:!max-w-none [&>*]:!ml-0 [&>*]:!border-l-0 [&>*]:!rounded-none' : ''"
-          >
+          <div class="sdui-blade-host-scroll-boundary"
+               (click)="$event.stopPropagation()"
+               [ngClass]="getBladeSizeClass(blade)">
             @if (resolvedComponents()[blade.type]) {
               <ng-container *ngComponentOutlet="resolvedComponents()[blade.type]!; inputs: getComponentInputs(blade)"></ng-container>
             } @else {
@@ -41,24 +65,31 @@ export class SduiBladeHostComponent implements OnInit {
   region = input<string>('global');
   protected bladeService = inject(SduiBladeService);
   protected resolvedComponents = signal<Record<string, Type<unknown>>>({});
-  
   protected bladesForThisRegion = computed(() => {
-    return this.bladeService.activeBlades().filter((bladeNode: any) => {
+    return this.bladeService.activeBlades().filter((bladeNode: SduiBladeNode) => {
       // If a blade specifies no region, it defaults to 'global'
-      const bladeRegion = bladeNode.properties?.region || 'global';
+      const bladeRegion = bladeNode.properties.region || 'global';
       return bladeRegion === this.region();
     });
   });
+
+  protected getBladeSizeClass(bladeNode: SduiBladeNode): string {
+    const w = bladeNode.properties.width || 'full';
+    return `sdui-size-${w}`;
+  }
+
+  protected isTransient(bladeNode: SduiBladeNode): boolean {
+    return !!(bladeNode.properties as Record<string, unknown>)?.['isTransient'];
+  }
 
   protected hasBladesForRegion = computed(() => this.bladesForThisRegion().length > 0);
 
   private readonly platformId = inject(PLATFORM_ID);
   private readonly destroyRef = inject(DestroyRef);
   
-  protected getComponentInputs(bladeTarget: any): Record<string, unknown> {
+  protected getComponentInputs(bladeTarget: SduiBladeNode): Record<string, unknown> {
     return {
-      bladeId: bladeTarget.id,
-      ...(bladeTarget.properties || {})
+      node: bladeTarget
     };
   }
   
@@ -97,9 +128,17 @@ export class SduiBladeHostComponent implements OnInit {
     if (this.hasBladesForRegion()) {
       const active = this.bladesForThisRegion();
       const top = active[active.length - 1];
-      if (!top.properties?.disableClose) {
+      if (!top.properties.disableClose) {
         this.bladeService.closeTopBlade();
       }
+    }
+  }
+
+  protected onBackdropClick(event: MouseEvent, blade: SduiBladeNode, index: number): void {
+    const active = this.bladesForThisRegion();
+    // Only close if they clicked the exact backdrop of the TOPMOST blade
+    if (index === active.length - 1 && !blade.properties.disableClose) {
+        this.bladeService.closeTopBlade();
     }
   }
 }

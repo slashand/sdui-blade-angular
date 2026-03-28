@@ -44,8 +44,7 @@ export class SduiRendererComponent {
 
   protected getComponentInputs(node: SduiNode): Record<string, unknown> {
     return {
-      bladeId: node.id,
-      ...(node.properties || {})
+      node: node
     };
   }
 

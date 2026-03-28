@@ -10,3 +10,4 @@ export * from './lib/sdui-blade-alert.component';
 export * from './lib/sdui-blade-pivot.component';
 export * from './lib/sdui-blade-properties.component';
 export * from './lib/sdui-renderer.component';
+export * from './lib/sdui-blade.types';
