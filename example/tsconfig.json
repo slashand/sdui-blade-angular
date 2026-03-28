@@ -22,7 +22,13 @@
     "lib": [
       "ES2022",
       "dom"
-    ]
+    ],
+    "baseUrl": "./",
+    "paths": {
+      "@angular/*": ["../node_modules/@angular/*"],
+      "@slashand/sdui-blade-angular": ["../dist"],
+      "@slashand/sdui-blade-angular/*": ["../dist/*"]
+    }
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,

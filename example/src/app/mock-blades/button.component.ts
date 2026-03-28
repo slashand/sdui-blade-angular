@@ -1,6 +1,6 @@
 import { Component, input, inject } from '@angular/core';
 import { SduiNode, SduiBladeNode } from '@slashand/sdui-blade-core';
-import { SduiBladeService } from '../../../../src/public-api';
+import { SduiBladeService } from '@slashand/sdui-blade-angular';
 
 /**
  * Generic structural action trigger for the Blade System.

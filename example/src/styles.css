@@ -1,1 +1,14 @@
-/* You can add global styles to this file, and also import other style files */
+@import "tailwindcss";
+@import "../../src/lib/sdui-blade-theme.css";
+
+/* Sandbox Specific Overrides to make the background visible */
+:root {
+  --sdui-bg: #f8fafc;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Lighter than the #1f2937 (slate-800) sidebar, creating an inset look */
+    --sdui-bg: #374151; 
+  }
+}

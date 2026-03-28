@@ -40,6 +40,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:application",
           "options": {
+            "preserveSymlinks": true,
             "outputPath": "dist/example",
             "index": "src/index.html",
             "browser": "src/main.ts",
@@ -77,13 +78,22 @@
             "development": {
               "optimization": false,
               "extractLicenses": false,
-              "sourceMap": true
+              "sourceMap": {
+                "scripts": true,
+                "styles": true,
+                "vendor": true
+              }
             }
           },
           "defaultConfiguration": "production"
         },
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
+          "options": {
+            "prebundle": {
+              "exclude": ["@slashand/sdui-blade-angular"]
+            }
+          },
           "configurations": {
             "production": {
               "buildTarget": "example:build:production"

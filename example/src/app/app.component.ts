@@ -1,14 +1,14 @@
 import { Component, effect, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 
-import { CommonModule } from '@angular/common';
+
+import { BLADE_REGISTRY, SduiBladeHostComponent, SduiBladeService } from '@slashand/sdui-blade-angular';
 import { SduiBladeNode, SduiElementType } from '@slashand/sdui-blade-core';
-import { BLADE_REGISTRY, SduiBladeHostComponent, SduiBladeService } from '../../../src/public-api';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterModule, SduiBladeHostComponent],
+  imports: [RouterModule, SduiBladeHostComponent],
   template: `
     <div class="flex flex-col h-screen w-screen bg-[var(--sdui-bg)] text-[var(--sdui-text)] overflow-hidden font-sans">
       
@@ -101,7 +101,7 @@ import { BLADE_REGISTRY, SduiBladeHostComponent, SduiBladeService } from '../../
 
         <!-- Main Content Area Wrapped by SDUI Blade Host! -->
         <app-sdui-blade-host class="flex-1 relative flex flex-col overflow-hidden bg-[var(--sdui-bg)]">
-          <main class="h-full w-full overflow-auto p-[20px] relative z-0 flex flex-col items-center justify-center">
+          <main class="h-full w-full overflow-auto p-[20px] relative z-0 flex flex-col items-center justify-center bg-[radial-gradient(var(--sdui-border)_1px,transparent_1px)] [background-size:24px_24px]">
             
             <div class="p-8 border-2 border-dashed border-[var(--sdui-border)] rounded-lg flex flex-col items-center justify-center bg-[var(--sdui-panel-bg)]/30 max-w-lg text-center">
               <div class="text-[var(--sdui-muted)] mb-2">
@@ -156,17 +156,22 @@ export class AppComponent implements OnInit {
       if (this.isHydrating) return;
 
       const durableIds = active
-        .filter(b => b.properties && !(b.properties as any)['isTransient'])
-        .map(b => b.id);
+        .filter(bladeNode => bladeNode.properties && !(bladeNode.properties as any)['isTransient'])
+        .map(bladeNode => bladeNode.id);
 
-      this.router.navigate([], {
-        relativeTo: this.route,
-        queryParams: { b: durableIds.length > 0 ? durableIds.join(',') : null },
-        queryParamsHandling: 'merge',
-        // Important: replaceUrl should be FALSE if we want browser BACK button to work!
-        // We only replace if we don't want history. But we DO want history for Blades.
-        replaceUrl: false
-      });
+      const durableParams = durableIds.length > 0 ? durableIds.join(',') : null;
+      const currentParams = this.route.snapshot.queryParams['b'] || null;
+
+      // Prevent Navigation Ping-Pong: Only push to history if the state ACTUALLY drifted from the URL
+      if (durableParams !== currentParams) {
+        this.router.navigate([], {
+          relativeTo: this.route,
+          queryParams: { b: durableParams },
+          queryParamsHandling: 'merge',
+          // Important: replaceUrl should be FALSE if we want browser BACK button to work!
+          replaceUrl: false
+        });
+      }
     }, { allowSignalWrites: true });
   }
 
@@ -175,7 +180,7 @@ export class AppComponent implements OnInit {
     // We listen to the router's exact query params. This fires on reload AND on Back/Forward!
     this.route.queryParams.subscribe(params => {
       const bParam = params['b'];
-      const activeIds = this.bladeService.activeBlades().map(b => b.id);
+      const activeIds = this.bladeService.activeBlades().map(bladeNode => bladeNode.id);
 
       if (!bParam) {
         // If URL has no blades but engine does (Back button pressed to root), clear them.
@@ -192,7 +197,7 @@ export class AppComponent implements OnInit {
         // a root blade via the standard API triggers the "Chain of Death" which accidentally 
         // obliterates any new blades we just added to the end of the array.
         // By using `setBlades`, we instruct the Engine to strictly match the URL's snapshot.
-        const mappedNodes = ids.map((id: string) => this.mockDb[id]).filter((n: any) => !!n);
+        const mappedNodes = ids.map((id: string) => this.mockDb[id]).filter((mappedNode: any) => !!mappedNode);
         this.bladeService.setBlades(mappedNodes);
       }
 
