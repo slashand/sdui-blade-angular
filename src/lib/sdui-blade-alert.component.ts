@@ -2,6 +2,12 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
 
 export type BladeAlertType = 'error' | 'warning' | 'info' | 'success';
 
+/**
+ * Renders an inline contextual alert block within the SDUI layout.
+ * 
+ * CORE RESPONSIBILITIES:
+ * 1. Present warnings, errors, or informational messages natively using the SDUI color palette.
+*/
 @Component({
   selector: 'sdui-blade-alert',
   standalone: true,
@@ -18,9 +24,25 @@ export type BladeAlertType = 'error' | 'warning' | 'info' | 'success';
   `
 })
 export class SduiBladeAlertComponent {
-  readonly type = input<BladeAlertType>('info');
+  /**
+   * Defines the optional heading text of the alert.
+   * Functionality: Conditionally renders a strongly formatted `h4` tag inside the alert block.
+   * Impact on others: Pushes the primary inner content (`ng-content`) downwards.
+   */
   readonly title = input<string>();
 
+  /**
+   * Sets the semantic tone of the alert, determining its color profile.
+   * Functionality: Drives the `computedClass` signal to switch background and border utilities.
+   * Impact on others: N/A (Self-contained styling).
+   */
+  readonly type = input<BladeAlertType>('info');
+
+  /**
+   * Resolves the final Tailwind string for the wrapper element.
+   * Functionality: Maps the `type` input to its respective error/warning/info/success classes.
+   * Impact on others: Dictates the visual border constraint and text coloring of the alert body.
+   */
   readonly computedClass = computed(() => {
     const bgClasses = {
       error: 'bg-red-500/10 border-red-500/20 text-red-400',

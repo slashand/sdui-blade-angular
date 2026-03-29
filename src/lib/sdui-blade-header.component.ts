@@ -1,9 +1,6 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 
 /**
- * [COMPONENT]
- * SduiBladeHeaderComponent
- * 
  * The default, accessible title bar and action shelf for any Blade.
  * 
  * CORE RESPONSIBILITIES:
@@ -11,8 +8,6 @@ import { ChangeDetectionStrategy, Component, input, output } from '@angular/core
  * 2. Manage the close action emitting back to the blade service.
  * 3. Provide strict content projection slots allowing developers to nest arbitrary 
  *    commands, icons, and status badges without breaking layout constraints.
- * 
- * file: src/lib/sdui-blade-header.component.ts
  */
 @Component({
   selector: 'sdui-blade-header',
@@ -72,12 +67,40 @@ import { ChangeDetectionStrategy, Component, input, output } from '@angular/core
   `
 })
 export class SduiBladeHeaderComponent {
-  readonly title = input<string>();
-  readonly subtitle = input<string>();
-  readonly showClose = input<boolean>(true);
+  /**
+   * Synthetic event fired when the native close button is pressed.
+   * Functionality: Gives host mock blades control over closing operations independently.
+   * Impact on others: Forces the developer using this `<sdui-blade-header>` to manually call the `SduiBladeService.closeBlade()` method.
+   */
   readonly close = output<void>();
 
+  /**
+   * Forwards the GUI click out to the component's output binding.
+   * Functionality: Emits the `close` event without internally interacting with the Blade Service directly.
+   * Impact on others: Maintains pure, dumb component status for the header itself.
+   */
   onClose() {
     this.close.emit();
   }
+
+  /**
+   * Toggles the rendering of the default native Close button ('X').
+   * Functionality: Controls whether the user can manually dismiss the blade from the header.
+   * Impact on others: If false, the blade must be closed programmatically by the application via `close` emitter or `closeBlade()`.
+   */
+  readonly showClose = input<boolean>(true);
+
+  /**
+   * Defines the secondary contextual text of the blade.
+   * Functionality: Displays directly beneath the title in a smaller font.
+   * Impact on others: Often used to show entity IDs or active sub-paths without polluting the main title.
+   */
+  readonly subtitle = input<string>();
+
+  /**
+   * Defines the primary display text of the blade.
+   * Functionality: Automatically maps to a specifically styled `h2` element.
+   * Impact on others: Visually anchors the spatial context of the blade for the user.
+   */
+  readonly title = input<string>();
 }

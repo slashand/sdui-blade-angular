@@ -5,6 +5,12 @@ export interface BladePropertyItem {
   value: string;
 }
 
+/**
+ * Renders a strict key-value pairs list for presenting immutable blade metadata.
+ * 
+ * CORE RESPONSIBILITIES:
+ * 1. Format metadata consistently via standard CSS Custom Properties.
+ */
 @Component({
   selector: 'sdui-blade-properties',
   standalone: true,
@@ -21,5 +27,10 @@ export interface BladePropertyItem {
   `
 })
 export class SduiBladePropertiesComponent {
+  /**
+   * The list of key-value pairs to render into the definition list.
+   * Functionality: Iterated through directly in the template.
+   * Impact on others: N/A
+   */
   readonly properties = input.required<BladePropertyItem[]>();
 }

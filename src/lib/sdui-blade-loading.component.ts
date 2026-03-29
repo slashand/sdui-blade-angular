@@ -1,5 +1,12 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
+/**
+ * An absolute-positioned structural overlay that dims the active blade and presents a loading state.
+ * 
+ * CORE RESPONSIBILITIES:
+ * 1. Obscure the interactive elements of a parent blade during asynchronous API requests.
+ * 2. Render a high-fidelity animated spinner using native CSS and SVG.
+ */
 @Component({
   selector: 'sdui-blade-loading',
   standalone: true,
@@ -19,6 +26,17 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
   `
 })
 export class SduiBladeLoadingComponent {
+  /**
+   * Primary Boolean toggle to render the overlay.
+   * Functionality: Controls the root `@if` statement that mounts the backdrop.
+   * Impact on others: Creates an absolute overlay that intercepts clicks targeting content visually beneath it.
+   */
   readonly isLoading = input<boolean>(false);
+
+  /**
+   * Optional loading caption shown below the spinner.
+   * Functionality: Interpolates text securely into the DOM.
+   * Impact on others: Provides context to the user regarding the current background polling or saving process.
+   */
   readonly text = input<string>();
 }
