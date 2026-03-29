@@ -2,9 +2,9 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "./dist/out-tsc",
-    "module": "commonjs",
+    "module": "ES2022",
     "types": ["vitest/globals", "node"]
   },
   "files": [],
-  "include": ["src/**/*.spec.ts", "src/**/*.d.ts"]
+  "include": ["src/**/*.spec.ts", "src/**/*.d.ts", "src/test-setup.ts"]
 }
