@@ -11,10 +11,10 @@ export type BladeSize = 'menu' | 'small' | 'medium' | 'large' | 'xlarge' | 'full
  * consuming applications to dynamically re-theme the width geometries without SDK recompilation.
  */
 export const bladeSizeClasses: Record<BladeSize, string> = {
+    full: 'w-full flex-1 shrink',
+    large: 'w-full max-w-[var(--sdui-blade-w-large,855px)] shrink',
+    medium: 'w-full max-w-[var(--sdui-blade-w-medium,585px)] shrink',
     menu: 'w-full max-w-[var(--sdui-blade-w-menu,265px)] shrink',
     small: 'w-full max-w-[var(--sdui-blade-w-small,315px)] shrink',
-    medium: 'w-full max-w-[var(--sdui-blade-w-medium,585px)] shrink',
-    large: 'w-full max-w-[var(--sdui-blade-w-large,855px)] shrink',
     xlarge: 'w-full max-w-[var(--sdui-blade-w-xlarge,1125px)] shrink',
-    full: 'w-full flex-1 shrink',
 };
