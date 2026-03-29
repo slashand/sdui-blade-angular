@@ -87,6 +87,54 @@ import { SduiBladeNode, SduiElementType } from '@slashand/sdui-blade-core';
                 <span [class.opacity-0]="!sidebarExpanded()" class="transition-opacity duration-200">Menu (265px)</span>
               </a>
             </li>
+
+            <!-- BEHAVIORAL AND SCROLL SPECS -->
+            @if (sidebarExpanded()) {
+              <li class="px-5 mt-4 py-2 uppercase text-[11px] font-bold tracking-wider text-[var(--sdui-muted)]/70 whitespace-nowrap">Behavioral Specs</li>
+            } @else {
+              <li class="px-[13px] mt-4 py-2 uppercase text-[11px] font-bold tracking-wider text-[var(--sdui-muted)]/70 flex justify-center w-full">BX</li>
+            }
+
+            <li>
+              <a [routerLink]="[]" [queryParams]="{ b: 'demo-kitchen-sink' }" 
+                 routerLinkActive="bg-[var(--sdui-border)] text-[var(--sdui-text)] font-semibold border-l-2 border-teal-500" 
+                 class="flex items-center gap-[12px] px-[16px] py-[10px] text-[13px] text-[var(--sdui-muted)] transition-colors hover:bg-[var(--sdui-border)] hover:text-[var(--sdui-text)] border-l-2 border-transparent overflow-hidden whitespace-nowrap">
+                <svg class="shrink-0 text-[16px]" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                <span [class.opacity-0]="!sidebarExpanded()" class="transition-opacity duration-200">Kitchen Sink (Scroll)</span>
+              </a>
+            </li>
+            <li>
+              <a [routerLink]="[]" [queryParams]="{ b: 'demo-limited-scroll' }" 
+                 routerLinkActive="bg-[var(--sdui-border)] text-[var(--sdui-text)] font-semibold border-l-2 border-teal-500" 
+                 class="flex items-center gap-[12px] px-[16px] py-[10px] text-[13px] text-[var(--sdui-muted)] transition-colors hover:bg-[var(--sdui-border)] hover:text-[var(--sdui-text)] border-l-2 border-transparent overflow-hidden whitespace-nowrap">
+                <svg class="shrink-0 text-[16px]" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"/><rect x="9" y="9" width="6" height="6"/></svg>
+                <span [class.opacity-0]="!sidebarExpanded()" class="transition-opacity duration-200">Limited Scroll Block</span>
+              </a>
+            </li>
+            <li>
+              <a [routerLink]="[]" [queryParams]="{ b: 'demo-stacking' }" 
+                 routerLinkActive="bg-[var(--sdui-border)] text-[var(--sdui-text)] font-semibold border-l-2 border-amber-500" 
+                 class="flex items-center gap-[12px] px-[16px] py-[10px] text-[13px] text-[var(--sdui-muted)] transition-colors hover:bg-[var(--sdui-border)] hover:text-[var(--sdui-text)] border-l-2 border-transparent overflow-hidden whitespace-nowrap">
+                <svg class="shrink-0 text-[16px]" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                <span [class.opacity-0]="!sidebarExpanded()" class="transition-opacity duration-200">Journey Parallax Stack</span>
+              </a>
+            </li>
+            <li>
+              <a [routerLink]="[]" [queryParams]="{ b: 'demo-naked' }" 
+                 routerLinkActive="bg-[var(--sdui-border)] text-[var(--sdui-text)] font-semibold border-l-2 border-fuchsia-500" 
+                 class="flex items-center gap-[12px] px-[16px] py-[10px] text-[13px] text-[var(--sdui-muted)] transition-colors hover:bg-[var(--sdui-border)] hover:text-[var(--sdui-text)] border-l-2 border-transparent overflow-hidden whitespace-nowrap">
+                <svg class="shrink-0 text-[16px]" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12h20"/><path d="M12 2v20"/></svg>
+                <span [class.opacity-0]="!sidebarExpanded()" class="transition-opacity duration-200">Naked Decoupling</span>
+              </a>
+            </li>
+            <li>
+              <a [routerLink]="[]" [queryParams]="{ b: 'demo-footer' }" 
+                 routerLinkActive="bg-[var(--sdui-border)] text-[var(--sdui-text)] font-semibold border-l-2 border-fuchsia-500" 
+                 class="flex items-center gap-[12px] px-[16px] py-[10px] text-[13px] text-[var(--sdui-muted)] transition-colors hover:bg-[var(--sdui-border)] hover:text-[var(--sdui-text)] border-l-2 border-transparent overflow-hidden whitespace-nowrap">
+                <svg class="shrink-0 text-[16px]" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="14" width="18" height="8" rx="2" ry="2"/><path d="M3 14h18"/><path d="M3 10h18"/><path d="M3 6h18"/></svg>
+                <span [class.opacity-0]="!sidebarExpanded()" class="transition-opacity duration-200">Footer Alignments</span>
+              </a>
+            </li>
           </ul>
 
           <div class="p-2 border-t border-[var(--sdui-border)] flex" [class.justify-end]="sidebarExpanded()" [class.justify-center]="!sidebarExpanded()">
@@ -145,6 +193,13 @@ export class AppComponent implements OnInit {
     BLADE_REGISTRY.register('MOCK_INPUT', async () => (await import('./mock-blades/form-input.component')).FormInputComponent);
     BLADE_REGISTRY.register('MOCK_TEXT', async () => (await import('./mock-blades/text.component')).TextComponent);
     BLADE_REGISTRY.register('MOCK_ROW', async () => (await import('./mock-blades/row.component')).RowComponent);
+    
+    // NEW BEHAVIORAL SPEC REGISTRATIONS
+    BLADE_REGISTRY.register('kitchen-sink', async () => (await import('./mock-blades/kitchen-sink-blade.component')).KitchenSinkBladeComponent);
+    BLADE_REGISTRY.register('limited-scroll', async () => (await import('./mock-blades/limited-scroll-blade.component')).LimitedScrollBladeComponent);
+    BLADE_REGISTRY.register('stack-test', async () => (await import('./mock-blades/stacking-blade.component')).StackingBladeComponent);
+    BLADE_REGISTRY.register('naked-test', async () => (await import('./mock-blades/naked-blade.component')).NakedBladeComponent);
+    BLADE_REGISTRY.register('footer-test', async () => (await import('./mock-blades/footer-alignments-blade.component')).FooterAlignmentsBladeComponent);
 
     this.initializeMockDb();
 
@@ -299,12 +354,42 @@ export class AppComponent implements OnInit {
       ]
     };
 
+    const kitchenSinkManifest: SduiBladeNode = {
+      id: 'demo-kitchen-sink', type: 'kitchen-sink' as any,
+      properties: { title: 'Kitchen Sink', width: 'large' } as any
+    };
+
+    const limitedScrollManifest: SduiBladeNode = {
+      id: 'demo-limited-scroll', type: 'limited-scroll' as any,
+      properties: { title: 'Limited Overflow', width: 'medium' } as any
+    };
+
+    const stackingManifest: SduiBladeNode = {
+      id: 'demo-stacking', type: 'stack-test' as any,
+      properties: { depth: 1, width: 'xlarge' } as any
+    };
+
+    const nakedManifest: SduiBladeNode = {
+      id: 'demo-naked', type: 'naked-test' as any,
+      properties: { width: 'large' } as any
+    };
+
+    const footerManifest: SduiBladeNode = {
+      id: 'demo-footer', type: 'footer-test' as any,
+      properties: { width: 'medium' } as any
+    };
+
     this.mockDb['demo-blade-full'] = fullManifest;
     this.mockDb['demo-blade-xlarge'] = xlargeManifest;
     this.mockDb['demo-blade-large'] = largeManifest;
     this.mockDb['demo-blade-medium'] = mediumManifest;
     this.mockDb['demo-blade-small'] = smallManifest;
     this.mockDb['demo-blade-menu'] = menuManifest;
+    this.mockDb['demo-kitchen-sink'] = kitchenSinkManifest;
+    this.mockDb['demo-limited-scroll'] = limitedScrollManifest;
+    this.mockDb['demo-stacking'] = stackingManifest;
+    this.mockDb['demo-naked'] = nakedManifest;
+    this.mockDb['demo-footer'] = footerManifest;
 
     // Connect payload relations
     (fullManifest.children![0] as any).children[1].properties.actionPayload = largeManifest;
