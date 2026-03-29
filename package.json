@@ -31,8 +31,8 @@
   "scripts": {
     "build": "ng-packagr -p ng-package.json",
     "test": "vitest run",
-    "publish:alpha": "npm version prerelease --preid=alpha --no-git-tag-version && npm run build && npm publish ./dist/sdui-blade-angular --tag alpha",
-    "publish:prod": "npm version patch --no-git-tag-version && npm run build && npm publish ./dist/sdui-blade-angular"
+    "publish:latest": "npm version prerelease --preid=alpha -m \"chore(release): bump version to %s\" && npm run build && npm publish ./dist/sdui-blade-angular --tag latest",
+    "publish:prod": "npm version patch -m \"chore(release): bump version to %s\" && npm run build && npm publish ./dist/sdui-blade-angular"
   },
   "peerDependencies": {
     "@angular/common": "^21.0.0",

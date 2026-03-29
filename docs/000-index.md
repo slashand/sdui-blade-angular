@@ -18,3 +18,5 @@ This documentation serves as a practical deployment guide alongside the profound
   *Understanding the CSS Variables contract to skin the Blade engine securely.*
 - [**006: Accessibility and E2E Targeting**](./006-accessibility-and-e2e.md)
   *The Structural DOM Taxonomy, escaping, WAI-ARIA compliance, and the No Naked Elements Ban.*
+- [**007: The Sovereign Engine Roadmap**](./007-the-sovereign-engine-roadmap.md)
+  *The architectural vision for advanced Multi-Region Orchestration, Defensives States, Generative UI Streams, and Framework-Agnostic testing scenarios.*
