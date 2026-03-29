@@ -7,7 +7,13 @@ import {
 import 'zone.js';
 import 'zone.js/testing';
 
-getTestBed().initTestEnvironment(
-  BrowserTestingModule,
-  platformBrowserTesting(),
-);
+console.log('--- TEST SETUP RUNNING ---');
+try {
+  getTestBed().initTestEnvironment(
+    BrowserTestingModule,
+    platformBrowserTesting(),
+  );
+  console.log('--- TEST BED INIT SUCCESS ---');
+} catch (e) {
+  console.log('--- TEST BED ALREADY INITED OR FAILED ---', e);
+}
