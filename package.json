@@ -1,6 +1,6 @@
 {
   "name": "@slashand/sdui-blade-angular",
-  "version": "1.0.0-alpha.8",
+  "version": "1.0.0-alpha.9",
   "description": "Angular v21 SDUI rendering wrapper for the Agnostic Blade System.",
   "author": "Slashand Studio",
   "license": "MIT",
