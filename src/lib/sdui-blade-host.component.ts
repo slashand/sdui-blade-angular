@@ -1,8 +1,8 @@
 import { CommonModule, isPlatformBrowser, NgComponentOutlet } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, input, OnInit, PLATFORM_ID, signal, Type } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, Injector, input, OnInit, PLATFORM_ID, signal, Type } from '@angular/core';
 import { SduiBladeNode } from '@slashand/sdui-blade-core';
 import { BLADE_REGISTRY } from './sdui-blade-registry';
-import { SduiBladeService } from './sdui-blade.service';
+import { SduiBladeService, SDUI_BLADE_NODE } from './sdui-blade.service';
 
 /**
  * The Root DOM Container for the structured Blade UI system. 
@@ -42,11 +42,13 @@ import { SduiBladeService } from './sdui-blade.service';
         >
           <!-- Wrapper enforcing rigid SDUI constraints, mimicking the framer-motion approach -->
           <div class="sdui-blade-host-scroll-boundary"
-               [style.transform]="bladeIndex === bladesForThisRegion().length - 1 ? 'translateX(0)' : 'translateX(-60px)'"
-               [style.transition]="'transform 400ms cubic-bezier(0.16, 1, 0.3, 1)'"
+               [style.--sdui-blade-custom-w]="getCustomWidthPx(blade)"
+               [ngClass]="[
+                 getBoundarySizeClass(blade)
+               ]"
                (click)="onScrollBoundaryClick($event, blade, bladeIndex)">
             @if (resolvedComponents()[blade.type]) {
-              <ng-container *ngComponentOutlet="resolvedComponents()[blade.type]!; inputs: getComponentInputs(blade)"></ng-container>
+              <ng-container *ngComponentOutlet="resolvedComponents()[blade.type]!; inputs: getComponentInputs(blade); injector: getBladeInjector(blade)"></ng-container>
             } @else {
               <ng-content select="[fallback-loader]"></ng-content>
             }
@@ -121,6 +123,34 @@ export class SduiBladeHostComponent implements OnInit {
   // ---------------------------------------------------------------------------
 
   /**
+   * Caches instantiated injectors to avoid memory leaks during change detection.
+   */
+  private readonly injectorCache = new Map<string, Injector>();
+
+  /**
+   * Captures the default environment injector to serve as the parent context.
+   */
+  private readonly defaultInjector = inject(Injector);
+
+  /**
+   * Spawns a dedicated Injector mapping the SDUI_BLADE_NODE token to the target JSON payload.
+   * Functionality: Wraps the generic blade within a native Angular context frame.
+   * Impact on others: Allows deeply nested generic SDK components to magically query their host Blade Node globally without manual prop drilling.
+   */
+  protected getBladeInjector(bladeTarget: SduiBladeNode): Injector {
+    const id = bladeTarget.id as string;
+    let injector = this.injectorCache.get(id);
+    if (!injector) {
+      injector = Injector.create({
+        providers: [{ provide: SDUI_BLADE_NODE, useValue: bladeTarget }],
+        parent: this.defaultInjector
+      });
+      this.injectorCache.set(id, injector);
+    }
+    return injector;
+  }
+
+  /**
    * Standardizes the inputs fed into the dynamic NgComponentOutlet.
    * Functionality: Ensures every lazy-loaded mock blade receives `bladeId`, `node`, and any custom `inputs`.
    * Impact on others: Mock blades universally depend on this shape to identify themselves.
@@ -132,6 +162,58 @@ export class SduiBladeHostComponent implements OnInit {
       node: bladeTarget,
       inputs: props['inputs']
     };
+  }
+
+  /**
+   * Resolves the required width bounds and margin-alignments for the host wrapper.
+   * Functionality: Extracts `blade.properties.size` directly from the JSON.
+   * Impact on others: Solves the flexbox shrink-wrap geometry collapse on full-width blades without using 100cqw hacks.
+   */
+  protected getBoundarySizeClass(bladeTarget: SduiBladeNode): string {
+    const sizeMap: Record<string, string> = {
+      full: 'sdui-boundary-size-full',
+      large: 'sdui-boundary-size-large',
+      medium: 'sdui-boundary-size-medium',
+      menu: 'sdui-boundary-size-menu',
+      small: 'sdui-boundary-size-small',
+      xlarge: 'sdui-boundary-size-xlarge',
+      xl: 'sdui-boundary-size-xl',
+      '2xl': 'sdui-boundary-size-2xl',
+      '3xl': 'sdui-boundary-size-3xl',
+      '4xl': 'sdui-boundary-size-4xl',
+      '5xl': 'sdui-boundary-size-5xl',
+      '6xl': 'sdui-boundary-size-6xl',
+      '7xl': 'sdui-boundary-size-7xl',
+    };
+    const props = (bladeTarget.properties as Record<string, unknown>) || {};
+    const sizeRaw = props['size'] || props['width'] || 'medium';
+    const sizeStr = String(sizeRaw);
+    
+    // If it's a known schema string, map it
+    if (sizeMap[sizeStr]) {
+      return sizeMap[sizeStr];
+    }
+    
+    // Otherwise it's a structural number (e.g. 800)
+    return 'sdui-boundary-size-custom';
+  }
+
+  /**
+   * Helper to determine if the blade is using a strictly typed custom numerical width.
+   */
+  protected isCustomWidth(bladeTarget: SduiBladeNode): boolean {
+    return this.getBoundarySizeClass(bladeTarget) === 'sdui-boundary-size-custom';
+  }
+
+  /**
+   * Helper to extract the safe pixel value for mathematical rendering.
+   */
+  protected getCustomWidthPx(bladeTarget: SduiBladeNode): string | null {
+    if (!this.isCustomWidth(bladeTarget)) return null;
+    const props = (bladeTarget.properties as Record<string, unknown>) || {};
+    const sizeRaw = props['size'] || props['width'];
+    if (!sizeRaw) return null;
+    return typeof sizeRaw === 'number' ? `${sizeRaw}px` : (String(sizeRaw).endsWith('px') ? String(sizeRaw) : `${sizeRaw}px`);
   }
 
   /**
