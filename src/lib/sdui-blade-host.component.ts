@@ -184,6 +184,11 @@ export class SduiBladeHostComponent implements OnInit {
    * @param index The z-index depth of the current action.
    */
   protected onBackdropClick(event: MouseEvent, blade: SduiBladeNode, index: number): void {
+    // PREVENT BUBBLING CLOSURES: Only close if the exact backdrop element was clicked
+    if (event.target !== event.currentTarget) {
+      return;
+    }
+
     const active = this.bladesForThisRegion();
     // Only close if they clicked the exact backdrop of the TOPMOST blade
     if (index === active.length - 1 && !blade.properties.disableClose) {
