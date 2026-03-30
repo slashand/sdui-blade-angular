@@ -55,8 +55,7 @@ describe('SduiBladeHostComponent', () => {
     bladeService.openBlade(node);
     fixture.detectChanges();
 
-    // Trigger the lazy-loader polling interval inside ngOnInit
-    await new Promise((r) => setTimeout(r, 50));
+    await new Promise((r) => setTimeout(r, 150));
     fixture.detectChanges();
 
     const instances = fixture.nativeElement.querySelectorAll('.sdui-blade-host-instance');
