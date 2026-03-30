@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0-alpha.9] - 2026-03-30
+
+### Fixed <!-- alpha.9 -->
+
+- **Spatial Traffic Controller:** Refactored SDUI Blade structural footprint classes (e.g., `.sdui-size-medium`) to use explicit `width: <X>px` with `max-width: 100%`, aligning with the rigid Hit-the-Wall Azure Portal responsive model.
+- **Parallax Anchoring Jitter:** Removed legacy `translateX` parallax shifts on parent blades so they remain solidly anchored to the right boundary while child blades animate in via basic native CSS slides.
+- **RouterLink Compilation Error (-993004):** Extracted `RouterOutlet`, `RouterLink`, and `RouterLinkActive` directly into standalone imports inside the example app, dropping `RouterModule` to prevent the Angular Language Service caching bug.
+- **Test Consistency:** Mitigated intermittent build-time lazy loader timeout failures in `sdui-blade-host.component.spec.ts`.
+
 ## [1.0.0-alpha.8] - 2026-03-29
 
 ### Fixed <!-- alpha.8 -->
