@@ -1,14 +1,12 @@
 import { Component, effect, inject, OnInit, signal } from '@angular/core';
-import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-
-
+import { ActivatedRoute, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { BLADE_REGISTRY, SduiBladeHostComponent, SduiBladeService } from '@slashand/sdui-blade-angular';
 import { SduiBladeNode, SduiElementType } from '@slashand/sdui-blade-core';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterModule, SduiBladeHostComponent],
+  imports: [RouterLink, RouterLinkActive, SduiBladeHostComponent],
   template: `
     <div class="flex flex-col h-screen w-screen bg-[var(--sdui-bg)] text-[var(--sdui-text)] overflow-hidden font-sans">
       
@@ -193,7 +191,7 @@ export class AppComponent implements OnInit {
     BLADE_REGISTRY.register('MOCK_INPUT', async () => (await import('./mock-blades/form-input.component')).FormInputComponent);
     BLADE_REGISTRY.register('MOCK_TEXT', async () => (await import('./mock-blades/text.component')).TextComponent);
     BLADE_REGISTRY.register('MOCK_ROW', async () => (await import('./mock-blades/row.component')).RowComponent);
-    
+
     // NEW BEHAVIORAL SPEC REGISTRATIONS
     BLADE_REGISTRY.register('kitchen-sink', async () => (await import('./mock-blades/kitchen-sink-blade.component')).KitchenSinkBladeComponent);
     BLADE_REGISTRY.register('limited-scroll', async () => (await import('./mock-blades/limited-scroll-blade.component')).LimitedScrollBladeComponent);
@@ -268,7 +266,7 @@ export class AppComponent implements OnInit {
     const fullManifest: SduiBladeNode = {
       id: 'demo-blade-full',
       type: SduiElementType.Blade,
-      properties: { title: 'Full Width (Responsive)', subtitle: 'flex-1' } as any,
+      properties: { title: 'Full Width (Responsive)', subtitle: 'flex-1', width: 'full' } as any,
       children: [
         {
           id: 's1', type: SduiElementType.Section, properties: { title: 'Behavior' },
