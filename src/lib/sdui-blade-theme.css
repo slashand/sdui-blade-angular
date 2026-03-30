@@ -193,7 +193,7 @@
 }
 
 /* Child enforcement for the scroll boundary */
-.sdui-blade-host-scroll-boundary > * {
+.sdui-blade-host-scroll-boundary {
   display: contents;
 }
 
