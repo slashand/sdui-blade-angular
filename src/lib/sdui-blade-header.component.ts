@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, output } from '@angular/core';
+import { SduiBladeService, SDUI_BLADE_NODE } from './sdui-blade.service';
 
 /**
  * The default, accessible title bar and action shelf for any Blade.
@@ -68,18 +69,33 @@ import { ChangeDetectionStrategy, Component, input, output } from '@angular/core
 })
 export class SduiBladeHeaderComponent {
   /**
+   * The context of the SDUI Blade currently rendering this header.
+   * Functionality: Injected automatically by the `SduiBladeHostComponent` creating an implicit link to the active JSON state.
+   * Impact on others: Allows the header to close itself without prop-drilling or explicit developer configuration.
+   */
+  private readonly activeBlade = inject(SDUI_BLADE_NODE, { optional: true });
+
+  /**
+   * Bound state machine orchestrator for dismissing this panel structurally.
+   */
+  private readonly bladeService = inject(SduiBladeService);
+
+  /**
    * Synthetic event fired when the native close button is pressed.
-   * Functionality: Gives host mock blades control over closing operations independently.
-   * Impact on others: Forces the developer using this `<sdui-blade-header>` to manually call the `SduiBladeService.closeBlade()` method.
+   * Functionality: Allows host mock blades to execute side-effects (e.g., showing a save warning) BEFORE the blade closes.
+   * Impact on others: Provides an escape hatch if standard closure isn't sufficient.
    */
   readonly close = output<void>();
 
   /**
-   * Forwards the GUI click out to the component's output binding.
-   * Functionality: Emits the `close` event without internally interacting with the Blade Service directly.
-   * Impact on others: Maintains pure, dumb component status for the header itself.
+   * Forwards the GUI click out to the component's output binding AND natively closes the wrapper.
+   * Functionality: Checks if it's running inside a transient wrapper and closes it. Then emits the `close` event.
+   * Impact on others: Developers using the SDK no longer need to manually map `(close)` to `bladeService.closeBlade()`.
    */
   onClose() {
+    if (this.activeBlade) {
+      this.bladeService.closeBlade(this.activeBlade.id);
+    }
     this.close.emit();
   }
 

@@ -1,6 +1,12 @@
 import { PlatformLocation } from '@angular/common';
-import { computed, inject, Injectable, PLATFORM_ID, signal } from '@angular/core';
+import { computed, inject, Injectable, InjectionToken, PLATFORM_ID, signal } from '@angular/core';
 import { SduiBladeNode } from '@slashand/sdui-blade-core';
+
+/**
+ * Injection Token to natively access the surrounding blade context from ANY child component
+ * in the tree, completely eliminating the need for strict `@Input()` drilling.
+ */
+export const SDUI_BLADE_NODE = new InjectionToken<Required<SduiBladeNode>>('SDUI_BLADE_NODE');
 
 /**
  * Native Angular v21 Signal-based service orchestrating the SDUI JSON logic and Blade Stack pipeline.
