@@ -100,9 +100,9 @@
 
 .sdui-blade-host-instance.sdui-transient-backdrop {
   pointer-events: auto;
-  background-color: rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
+  background-color: var(--sdui-backdrop-bg, rgba(0, 0, 0, 0.3));
+  backdrop-filter: blur(var(--sdui-backdrop-blur, 2px));
+  -webkit-backdrop-filter: blur(var(--sdui-backdrop-blur, 2px));
 }
 
 .sdui-blade-host-scroll-boundary {

@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0-alpha.12] - 2026-03-31
+
+### Added <!-- alpha.12 -->
+
+- **URL Deserialization Engine:** Implemented browser hash and popstate synchronization within `SduiBladeService`, letting the URL parameter structure act as a single source of truth for the active blade stack.
+- **Dynamic Backdrop Styling:** Exposed `--sdui-backdrop-bg` and `--sdui-backdrop-blur` CSS custom properties on transient elements, empowering publishers to explicitly define the overlay darkness in `SduiBladeNode.properties`.
+
+### Fixed <!-- alpha.12 -->
+
+- **Hold Animations:** Enforced a zero-opacity structural "hold" step during Angular component leave/enter lifecycles so components do not exhibit ghost-fading out during the native RTL slide transition.
+- **Invisible Click Catcher Regression:** Restored explicit transparency to non-transient standard blades so interaction events securely pass through, reverting previous background-color blocks.
+
+## [1.0.0-alpha.11] - 2026-03-31
+
+### Fixed <!-- alpha.11 -->
+
+- **Backdrop Bubble Trigger:** Prevented rogue DOM event bubbling from triggering structural boundary closures inside complex internal click zones, establishing safe target delegation on the transient layer.
+
+## [1.0.0-alpha.10] - 2026-03-31
+
+### Fixed <!-- alpha.10 -->
+
+- **Rigid Host Constraints:** Engineered global `display: contents` across internal host boundaries (`app-sdui-blade-host`, `sdui-base-blade`) to completely eliminate the structural flex-shrinking collapsing that previously destroyed wide layouts on deep nesting.
+- **Dynamic Theming Optimization:** Stabilized runtime CSS class definitions across nested layout scopes without memory bloat.
+
 ## [1.0.0-alpha.9] - 2026-03-30
 
 ### Fixed <!-- alpha.9 -->

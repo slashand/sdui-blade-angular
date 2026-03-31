@@ -34,6 +34,8 @@ import { SduiBladeService, SDUI_BLADE_NODE } from './sdui-blade.service';
           animate.leave="sdui-blade-leave"
           [class.sdui-root-blade]="bladeIndex === 0"
           [class.sdui-transient-backdrop]="isTransient(blade)"
+          [style.--sdui-backdrop-bg]="getBackdropColor(blade)"
+          [style.--sdui-backdrop-blur]="getBackdropBlur(blade)"
           [style.zIndex]="10 + bladeIndex"
           role="dialog"
           aria-modal="false"
@@ -223,6 +225,20 @@ export class SduiBladeHostComponent implements OnInit {
    */
   protected isTransient(bladeNode: SduiBladeNode): boolean {
     return !!(bladeNode.properties as Record<string, unknown>)?.['isTransient'];
+  }
+
+  /**
+   * Optional custom css rgba string for the transient backdrop overriding default darkness.
+   */
+  protected getBackdropColor(bladeNode: SduiBladeNode): string | null {
+    return (bladeNode.properties as Record<string, unknown>)?.['backdropColor'] as string || null;
+  }
+
+  /**
+   * Optional custom css blur size (e.g. 8px) for the transient backdrop overriding default blur.
+   */
+  protected getBackdropBlur(bladeNode: SduiBladeNode): string | null {
+    return (bladeNode.properties as Record<string, unknown>)?.['backdropBlur'] as string || null;
   }
 
   /**
