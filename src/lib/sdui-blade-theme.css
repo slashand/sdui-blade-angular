@@ -67,21 +67,30 @@
   pointer-events: none;
 }
 
-/* Animations hooks natively consumed by Angular's animate.enter and animate.leave bindings */
-@keyframes sdui-blade-fade-in { from { opacity: 0; } to { opacity: 1; } }
-@keyframes sdui-blade-fade-out { from { opacity: 1; } to { opacity: 0; } }
-
-.sdui-blade-host-instance {
-  animation: sdui-blade-fade-in var(--sdui-blade-speed, 500ms) ease-out forwards;
-}
-
 .sdui-blade-host-instance .sdui-blade-host-scroll-boundary {
-  animation: sdui-blade-slide-in var(--sdui-blade-speed, 500ms) var(--sdui-blade-easing, cubic-bezier(0.0, 0, 0.2, 1))
+  animation: sdui-blade-slide-in var(--sdui-blade-speed, 500ms) var(--sdui-blade-easing, cubic-bezier(0, 0, 0.2, 1))
     forwards;
 }
 
+/* 
+  We assign a dummy animation to the host elements to ensure Angular's `animation.enter/leave` 
+  DOM retention strictly matches the slide speed of the inner boundary without applying any visual fading.
+*/
+@keyframes sdui-blade-hold {
+  from {
+    visibility: visible;
+  }
+  to {
+    visibility: visible;
+  }
+}
+
+.sdui-blade-host-instance {
+  animation: sdui-blade-hold var(--sdui-blade-speed, 500ms) ease-out forwards;
+}
+
 .sdui-blade-leave {
-  animation: sdui-blade-fade-out var(--sdui-blade-speed, 500ms) ease-in forwards !important;
+  animation: sdui-blade-hold var(--sdui-blade-speed, 500ms) ease-in forwards !important;
 }
 
 .sdui-blade-leave .sdui-blade-host-scroll-boundary {
@@ -193,7 +202,7 @@
 }
 
 /* Child enforcement for the scroll boundary */
-.sdui-blade-host-scroll-boundary {
+.sdui-blade-host-scroll-boundary > * {
   display: contents;
 }
 
