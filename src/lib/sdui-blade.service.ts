@@ -1,4 +1,4 @@
-import { PlatformLocation } from '@angular/common';
+import { PlatformLocation, DOCUMENT, isPlatformBrowser } from '@angular/common';
 import { computed, inject, Injectable, InjectionToken, PLATFORM_ID, signal } from '@angular/core';
 import { SduiBladeNode } from '@slashand/sdui-blade-core';
 
@@ -59,6 +59,33 @@ export class SduiBladeService {
    * Impact on others: Used for hash-routing parsing if implemented.
    */
   private readonly platformLocation = inject(PlatformLocation);
+  private readonly document = inject(DOCUMENT);
+
+  constructor() {
+    if (isPlatformBrowser(this.platformId)) {
+      // 1. Initial hydration from URL
+      const initialHash = this.platformLocation.hash;
+      if (initialHash) {
+        const nodes = this.deserializeFromHash(initialHash);
+        if (nodes.length > 0) {
+          this._activeBlades.set(nodes);
+        }
+      }
+
+      // 2. Listen to browser Back/Forward popstate events
+      this.platformLocation.onHashChange(() => {
+        this.isProgrammaticBack = true;
+        const hash = this.platformLocation.hash;
+        const nodes = this.deserializeFromHash(hash);
+        this._activeBlades.set(nodes);
+        
+        // Reset the flag asynchronously to allow the update to process
+        setTimeout(() => {
+          this.isProgrammaticBack = false;
+        }, 0);
+      });
+    }
+  }
 
   /**
    * Discards the entire Journey Protocol stack.
@@ -68,6 +95,7 @@ export class SduiBladeService {
   closeAllBlades(): void {
     if (this._activeBlades().length > 0) {
       this._activeBlades.set([]);
+      this.updateURLHash([], false);
     }
   }
 
@@ -83,6 +111,7 @@ export class SduiBladeService {
     if (index > -1) {
       const newBlades = blades.slice(0, index);
       this._activeBlades.set(newBlades);
+      this.updateURLHash(newBlades, false);
     }
   }
 
@@ -96,6 +125,7 @@ export class SduiBladeService {
     if (blades.length > 0) {
       const newBlades = blades.slice(0, -1);
       this._activeBlades.set(newBlades);
+      this.updateURLHash(newBlades, false);
     }
   }
 
@@ -144,10 +174,12 @@ export class SduiBladeService {
         // Safe update in place, don't flood history
         const newBlades = [...blades];
         newBlades[newBlades.length - 1] = { ...lastBlade, properties: node.properties || {}, children: node.children || lastBlade.children } as unknown as Required<SduiBladeNode>;
+        this.updateURLHash(newBlades, true);
         return newBlades;
       }
 
       const newBlades = [...blades, { id, type: node.type, properties: node.properties || {}, children: node.children || [] } as unknown as Required<SduiBladeNode>];
+      this.updateURLHash(newBlades, false);
       return newBlades;
     });
   }
@@ -191,7 +223,9 @@ export class SduiBladeService {
   setAppBlade(blade: SduiBladeNode): void {
     const id = blade.id || `${blade.type}-${Date.now()}`;
     const parsedBlade = { ...blade, id, properties: blade.properties || {} } as Required<SduiBladeNode>;
-    this._activeBlades.set([parsedBlade]);
+    const newBlades = [parsedBlade];
+    this._activeBlades.set(newBlades);
+    this.updateURLHash(newBlades, true);
   }
 
   /**
@@ -203,6 +237,7 @@ export class SduiBladeService {
   setBlades(blades: SduiBladeNode[]): void {
     const typed = blades as Required<SduiBladeNode>[];
     this._activeBlades.set(typed);
+    this.updateURLHash(typed, true);
   }
 
   /**
@@ -223,9 +258,29 @@ export class SduiBladeService {
           properties: { ...(existingNode.properties || {}), ...properties }
         } as unknown as Required<SduiBladeNode>;
         // Use replace = true so partial layout tweaks don't flood the browser Back navigation stack
+        this.updateURLHash(newBlades, true);
         return newBlades;
       }
       return blades;
     });
   }
+  private updateURLHash(nodes: Required<SduiBladeNode>[], replace = false): void {
+    if (this.isProgrammaticBack) return; // Prevent loop
+    const newHash = this.serializeToHash(nodes);
+    
+    // We only interact with URL if we are in browser to prevent errors on SSR
+    if (isPlatformBrowser(this.platformId)) {
+      const windowObj = this.document.defaultView;
+      const currentHash = windowObj?.location.hash || ''; // Need explicitly to catch empty
+      if (currentHash !== newHash && windowObj) {
+        if (replace || newHash === '') {
+          // Empty hash is technically a "replace" up the stack, or `replace` explicitly
+          windowObj.history.replaceState(null, '', windowObj.location.pathname + windowObj.location.search + newHash);
+        } else {
+          windowObj.location.hash = newHash;
+        }
+      }
+    }
+  }
 }
+
