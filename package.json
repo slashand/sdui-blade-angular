@@ -1,6 +1,6 @@
 {
   "name": "@slashand/sdui-blade-angular",
-  "version": "1.0.0-alpha.12",
+  "version": "1.0.0",
   "description": "Angular v21 SDUI rendering wrapper for the Agnostic Blade System.",
   "author": "Slashand Studio",
   "license": "MIT",
@@ -20,7 +20,8 @@
   },
   "homepage": "https://github.com/slashand/sdui-blade-angular#readme",
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "tag": "latest"
   },
   "exports": {
     "./src/lib/sdui-blade-theme.css": {
@@ -31,8 +32,8 @@
   "scripts": {
     "build": "ng-packagr -p ng-package.json",
     "test": "vitest run",
-    "publish:latest": "npm version prerelease --preid=alpha -m \"chore(release): bump version to %s\" && npm run build && npm publish ./dist --tag latest",
-    "publish:prod": "npm version patch -m \"chore(release): bump version to %s\" && npm run build && npm publish ./dist"
+    "publish:latest": "npm run build && npm publish ./dist --access public --tag latest --provenance",
+    "publish:prod": "npm run publish:latest"
   },
   "peerDependencies": {
     "@angular/common": "^21.0.0",
@@ -41,19 +42,20 @@
     "@slashand/sdui-blade-core": "^1.0.0-alpha.4"
   },
   "devDependencies": {
-    "@analogjs/vite-plugin-angular": "^2.3.1",
-    "@angular/common": "^21.2.5",
-    "@angular/compiler": "^21.2.5",
-    "@angular/compiler-cli": "^21.2.5",
-    "@angular/core": "^21.2.5",
-    "@angular/platform-browser": "^21.2.5",
-    "@angular/platform-browser-dynamic": "^21.2.5",
-    "jsdom": "^29.0.1",
-    "ng-packagr": "^21.2.1",
+    "@analogjs/vite-plugin-angular": "^2.9.7",
+    "@angular/common": "^21.2.26",
+    "@angular/compiler": "^21.2.26",
+    "@angular/compiler-cli": "^21.2.26",
+    "@angular/core": "^21.2.26",
+    "@angular/platform-browser": "^21.2.26",
+    "@angular/platform-browser-dynamic": "^21.2.26",
+    "jsdom": "^29.1.1",
+    "ng-packagr": "^21.2.7",
     "rxjs": "^7.8.2",
-    "tslib": "^2.8.1",
+    "tslib": "^2.9.1",
     "typescript": "^5.9.3",
-    "vitest": "^4.1.0",
-    "zone.js": "^0.16.1"
+    "vitest": "^4.1.12",
+    "zone.js": "^0.16.3",
+    "@angular/build": "^21.2.30"
   }
 }

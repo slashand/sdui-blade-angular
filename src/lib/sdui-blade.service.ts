@@ -273,11 +273,12 @@ export class SduiBladeService {
       const windowObj = this.document.defaultView;
       const currentHash = windowObj?.location.hash || ''; // Need explicitly to catch empty
       if (currentHash !== newHash && windowObj) {
-        if (replace || newHash === '') {
-          // Empty hash is technically a "replace" up the stack, or `replace` explicitly
+        if (replace) {
           windowObj.history.replaceState(null, '', windowObj.location.pathname + windowObj.location.search + newHash);
+        } else if (newHash === '') {
+          windowObj.history.pushState(null, '', windowObj.location.pathname + windowObj.location.search);
         } else {
-          windowObj.location.hash = newHash;
+          windowObj.history.pushState(null, '', windowObj.location.pathname + windowObj.location.search + newHash);
         }
       }
     }
