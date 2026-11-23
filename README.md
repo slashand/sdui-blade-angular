@@ -34,6 +34,17 @@ The architecture and implementation of the Angular Blade System are documented r
 
 *Live production applications utilizing these blades will be showcased here as their respective websites officially launch.*
 
+## Package version correction — November 22, 2026
+
+The package and root lockfile retain `1.0.0`, matching the committed GitHub
+baseline. The unintended local `1.0.2` increment has been removed. A read-only
+check of the public npm registry confirms that stable `1.0.0` is not published;
+this source correction performs no publication or npm tag change. Core and Svelte
+versions and all dependency ranges remain unchanged. Validation compared both
+parsed JSON files before/after: only the package's own version fields changed;
+manifest and root lockfile versions agree with Git HEAD. Existing application
+qualification is retained without repeating unchanged browser or unit tests.
+
 ## 🗺️ Angular Ecosystem Roadmap
 
 Our specific trajectory for the Angular wrapper.

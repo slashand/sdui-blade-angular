@@ -1,281 +1,625 @@
-import { Component, effect, inject, OnInit, signal } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink, RouterLinkActive } from '@angular/router';
+import {
+  AfterViewInit,
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  DestroyRef,
+  ElementRef,
+  effect,
+  HostListener,
+  inject,
+  OnInit,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { BLADE_REGISTRY, SduiBladeHostComponent, SduiBladeService } from '@slashand/sdui-blade-angular';
-import { SduiBladeNode, SduiElementType } from '@slashand/sdui-blade-core';
+import { SduiBladeNode, SduiElementType, SduiNode, SduiParser } from '@slashand/sdui-blade-core';
+import { CORE_PILLARS, generateProceduralPayload, OmniverseApp } from './omniverse-gallery';
+import { resolveStackingChild } from './mock-blades/stacking-blade-node';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive, SduiBladeHostComponent],
+  imports: [SduiBladeHostComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="flex flex-col h-screen w-screen bg-[var(--sdui-bg)] text-[var(--sdui-text)] overflow-hidden font-sans">
-      
-      <!-- Global Top Nav -->
-      <header class="h-[48px] shrink-0 border-b border-[var(--sdui-border)] bg-[var(--sdui-panel-bg)] flex items-center px-[20px] justify-between z-20">
-        <div class="flex items-center gap-[20px]">
-          <h2 class="text-xl font-black tracking-tight text-[var(--sdui-primary)]">Slashand<span class="text-[var(--sdui-text)]">Cloud</span></h2>
-          <div class="w-[1px] h-[24px] bg-[var(--sdui-border)]"></div>
-          <div class="text-sm font-medium text-[var(--sdui-text)]">Dashboard</div>
-        </div>
-        <div class="flex items-center gap-[20px] text-sm text-[var(--sdui-muted)]">
-          <span>Active Directory</span>
-          <div class="w-8 h-8 rounded-full bg-[var(--sdui-primary)] text-[var(--sdui-text-inverse)] flex items-center justify-center font-bold">TC</div>
+    <div class="sdui-demo-shell" [attr.data-theme]="currentTheme()">
+      <a class="sdui-skip-link" href="#demo-main">Skip to demo gallery</a>
+      <header #demoHeader class="sdui-global-header" (keydown.escape)="closeOptions($event)">
+        <h1 class="sdui-brand-title" aria-label="sdui Omniverse SDK Matrix Angular">
+          <span class="sdui-brand-prefix">sdui ::</span> <span class="sdui-brand-long">Omniverse </span>SDK Matrix
+          <span class="sdui-framework-label">Angular</span>
+        </h1>
+        <button
+          #optionsToggle
+          type="button"
+          class="sdui-header-button sdui-options-toggle"
+          aria-label="Demo options"
+          aria-controls="sdui-demo-options"
+          [attr.aria-expanded]="optionsOpen()"
+          (click)="optionsOpen.set(!optionsOpen())"
+        >
+          ⋯
+        </button>
+        <div id="sdui-demo-options" class="sdui-header-actions" [class.sdui-options-open]="optionsOpen()">
+          <span class="sdui-theme-label">Current theme: {{ themeName() }}</span>
+          <button
+            type="button"
+            class="sdui-header-button sdui-theme-button"
+            (click)="toggleTheme(); optionsOpen.set(false)"
+          >
+            Change theme
+          </button>
+          <button
+            type="button"
+            class="sdui-header-button sdui-toggle-backdrop-button"
+            [attr.aria-pressed]="backdropEnabled()"
+            (click)="backdropEnabled.set(!backdropEnabled()); optionsOpen.set(false)"
+          >
+            Backdrop: {{ backdropEnabled() ? 'Enabled' : 'Disabled' }}
+          </button>
+          <button
+            #inspectorToggle
+            type="button"
+            class="sdui-header-button sdui-inspector-button"
+            [attr.aria-expanded]="showJson()"
+            aria-controls="sdui-json-inspector"
+            (click)="toggleInspector(); optionsOpen.set(false)"
+          >
+            {{ showJson() ? 'Close payload inspector' : 'Inspect manifest JSON' }}
+          </button>
         </div>
       </header>
-
-      <div class="flex flex-1 overflow-hidden relative">
-        <!-- Collapsible Sidebar -->
-        <nav 
-          [class.w-[180px]]="sidebarExpanded()" 
-          [class.w-[50px]]="!sidebarExpanded()" 
-          class="shrink-0 border-r border-[var(--sdui-border)] bg-[var(--sdui-panel-bg)] flex flex-col justify-between z-10 shadow-lg transition-all duration-300 overflow-hidden">
-          
-          <ul class="flex flex-col w-full py-4">
-            @if (sidebarExpanded()) {
-              <li class="px-5 py-2 uppercase text-[11px] font-bold tracking-wider text-[var(--sdui-muted)]/70 whitespace-nowrap">Blade Sizing Specs</li>
-            } @else {
-              <li class="px-[13px] py-2 uppercase text-[11px] font-bold tracking-wider text-[var(--sdui-muted)]/70 flex justify-center w-full">BS</li>
-            }
-
-            <li>
-              <a [routerLink]="[]" [queryParams]="{ b: 'demo-blade-full' }" 
-                 routerLinkActive="bg-[var(--sdui-border)] text-[var(--sdui-text)] font-semibold border-l-2 border-[var(--sdui-primary)]" 
-                 class="flex items-center gap-[12px] px-[16px] py-[10px] text-[13px] text-[var(--sdui-muted)] transition-colors hover:bg-[var(--sdui-border)] hover:text-[var(--sdui-text)] border-l-2 border-transparent hover:underline overflow-hidden whitespace-nowrap">
-                <svg class="shrink-0 text-[16px]" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
-                <span [class.opacity-0]="!sidebarExpanded()" class="transition-opacity duration-200">Full-Width (Default)</span>
-              </a>
-            </li>
-            <li>
-              <a [routerLink]="[]" [queryParams]="{ b: 'demo-blade-xlarge' }" 
-                 routerLinkActive="bg-[var(--sdui-border)] text-[var(--sdui-text)] font-semibold border-l-2 border-[var(--sdui-primary)]" 
-                 class="flex items-center gap-[12px] px-[16px] py-[10px] text-[13px] text-[var(--sdui-muted)] transition-colors hover:bg-[var(--sdui-border)] hover:text-[var(--sdui-text)] border-l-2 border-transparent overflow-hidden whitespace-nowrap">
-                <svg class="shrink-0 text-[16px]" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="16" y1="4" x2="16" y2="20"/></svg>
-                <span [class.opacity-0]="!sidebarExpanded()" class="transition-opacity duration-200">X-Large (1125px)</span>
-              </a>
-            </li>
-            <li>
-              <a [routerLink]="[]" [queryParams]="{ b: 'demo-blade-large' }" 
-                 routerLinkActive="bg-[var(--sdui-border)] text-[var(--sdui-text)] font-semibold border-l-2 border-[var(--sdui-primary)]" 
-                 class="flex items-center gap-[12px] px-[16px] py-[10px] text-[13px] text-[var(--sdui-muted)] transition-colors hover:bg-[var(--sdui-border)] hover:text-[var(--sdui-text)] border-l-2 border-transparent overflow-hidden whitespace-nowrap">
-                <svg class="shrink-0 text-[16px]" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><line x1="14" y1="4" x2="14" y2="20"/></svg>
-                <span [class.opacity-0]="!sidebarExpanded()" class="transition-opacity duration-200">Large (855px)</span>
-              </a>
-            </li>
-            <li>
-              <a [routerLink]="[]" [queryParams]="{ b: 'demo-blade-medium' }" 
-                 routerLinkActive="bg-[var(--sdui-border)] text-[var(--sdui-text)] font-semibold border-l-2 border-[var(--sdui-primary)]" 
-                 class="flex items-center gap-[12px] px-[16px] py-[10px] text-[13px] text-[var(--sdui-muted)] transition-colors hover:bg-[var(--sdui-border)] hover:text-[var(--sdui-text)] border-l-2 border-transparent overflow-hidden whitespace-nowrap">
-                <svg class="shrink-0 text-[16px]" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="3" x2="12" y2="21"/></svg>
-                <span [class.opacity-0]="!sidebarExpanded()" class="transition-opacity duration-200">Medium (585px)</span>
-              </a>
-            </li>
-             <li>
-              <a [routerLink]="[]" [queryParams]="{ b: 'demo-blade-small' }" 
-                 routerLinkActive="bg-[var(--sdui-border)] text-[var(--sdui-text)] font-semibold border-l-2 border-[var(--sdui-primary)]" 
-                 class="flex items-center gap-[12px] px-[16px] py-[10px] text-[13px] text-[var(--sdui-muted)] transition-colors hover:bg-[var(--sdui-border)] hover:text-[var(--sdui-text)] border-l-2 border-transparent overflow-hidden whitespace-nowrap">
-                <svg class="shrink-0 text-[16px]" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="12" height="16" rx="2"/><line x1="10" y1="4" x2="10" y2="20"/></svg>
-                <span [class.opacity-0]="!sidebarExpanded()" class="transition-opacity duration-200">Small (315px)</span>
-              </a>
-            </li>
-            <li>
-              <a [routerLink]="[]" [queryParams]="{ b: 'demo-blade-menu' }" 
-                 routerLinkActive="bg-[var(--sdui-border)] text-[var(--sdui-text)] font-semibold border-l-2 border-[var(--sdui-primary)]" 
-                 class="flex items-center gap-[12px] px-[16px] py-[10px] text-[13px] text-[var(--sdui-muted)] transition-colors hover:bg-[var(--sdui-border)] hover:text-[var(--sdui-text)] border-l-2 border-transparent overflow-hidden whitespace-nowrap">
-                <svg class="shrink-0 text-[16px]" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-                <span [class.opacity-0]="!sidebarExpanded()" class="transition-opacity duration-200">Menu (265px)</span>
-              </a>
-            </li>
-
-            <!-- BEHAVIORAL AND SCROLL SPECS -->
-            @if (sidebarExpanded()) {
-              <li class="px-5 mt-4 py-2 uppercase text-[11px] font-bold tracking-wider text-[var(--sdui-muted)]/70 whitespace-nowrap">Behavioral Specs</li>
-            } @else {
-              <li class="px-[13px] mt-4 py-2 uppercase text-[11px] font-bold tracking-wider text-[var(--sdui-muted)]/70 flex justify-center w-full">BX</li>
-            }
-
-            <li>
-              <a [routerLink]="[]" [queryParams]="{ b: 'demo-kitchen-sink' }" 
-                 routerLinkActive="bg-[var(--sdui-border)] text-[var(--sdui-text)] font-semibold border-l-2 border-teal-500" 
-                 class="flex items-center gap-[12px] px-[16px] py-[10px] text-[13px] text-[var(--sdui-muted)] transition-colors hover:bg-[var(--sdui-border)] hover:text-[var(--sdui-text)] border-l-2 border-transparent overflow-hidden whitespace-nowrap">
-                <svg class="shrink-0 text-[16px]" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                <span [class.opacity-0]="!sidebarExpanded()" class="transition-opacity duration-200">Kitchen Sink (Scroll)</span>
-              </a>
-            </li>
-            <li>
-              <a [routerLink]="[]" [queryParams]="{ b: 'demo-limited-scroll' }" 
-                 routerLinkActive="bg-[var(--sdui-border)] text-[var(--sdui-text)] font-semibold border-l-2 border-teal-500" 
-                 class="flex items-center gap-[12px] px-[16px] py-[10px] text-[13px] text-[var(--sdui-muted)] transition-colors hover:bg-[var(--sdui-border)] hover:text-[var(--sdui-text)] border-l-2 border-transparent overflow-hidden whitespace-nowrap">
-                <svg class="shrink-0 text-[16px]" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"/><rect x="9" y="9" width="6" height="6"/></svg>
-                <span [class.opacity-0]="!sidebarExpanded()" class="transition-opacity duration-200">Limited Scroll Block</span>
-              </a>
-            </li>
-            <li>
-              <a [routerLink]="[]" [queryParams]="{ b: 'demo-stacking' }" 
-                 routerLinkActive="bg-[var(--sdui-border)] text-[var(--sdui-text)] font-semibold border-l-2 border-amber-500" 
-                 class="flex items-center gap-[12px] px-[16px] py-[10px] text-[13px] text-[var(--sdui-muted)] transition-colors hover:bg-[var(--sdui-border)] hover:text-[var(--sdui-text)] border-l-2 border-transparent overflow-hidden whitespace-nowrap">
-                <svg class="shrink-0 text-[16px]" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
-                <span [class.opacity-0]="!sidebarExpanded()" class="transition-opacity duration-200">Journey Parallax Stack</span>
-              </a>
-            </li>
-            <li>
-              <a [routerLink]="[]" [queryParams]="{ b: 'demo-naked' }" 
-                 routerLinkActive="bg-[var(--sdui-border)] text-[var(--sdui-text)] font-semibold border-l-2 border-fuchsia-500" 
-                 class="flex items-center gap-[12px] px-[16px] py-[10px] text-[13px] text-[var(--sdui-muted)] transition-colors hover:bg-[var(--sdui-border)] hover:text-[var(--sdui-text)] border-l-2 border-transparent overflow-hidden whitespace-nowrap">
-                <svg class="shrink-0 text-[16px]" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12h20"/><path d="M12 2v20"/></svg>
-                <span [class.opacity-0]="!sidebarExpanded()" class="transition-opacity duration-200">Naked Decoupling</span>
-              </a>
-            </li>
-            <li>
-              <a [routerLink]="[]" [queryParams]="{ b: 'demo-footer' }" 
-                 routerLinkActive="bg-[var(--sdui-border)] text-[var(--sdui-text)] font-semibold border-l-2 border-fuchsia-500" 
-                 class="flex items-center gap-[12px] px-[16px] py-[10px] text-[13px] text-[var(--sdui-muted)] transition-colors hover:bg-[var(--sdui-border)] hover:text-[var(--sdui-text)] border-l-2 border-transparent overflow-hidden whitespace-nowrap">
-                <svg class="shrink-0 text-[16px]" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="14" width="18" height="8" rx="2" ry="2"/><path d="M3 14h18"/><path d="M3 10h18"/><path d="M3 6h18"/></svg>
-                <span [class.opacity-0]="!sidebarExpanded()" class="transition-opacity duration-200">Footer Alignments</span>
-              </a>
-            </li>
-          </ul>
-
-          <div class="p-2 border-t border-[var(--sdui-border)] flex" [class.justify-end]="sidebarExpanded()" [class.justify-center]="!sidebarExpanded()">
-            <button 
-              (click)="sidebarExpanded.set(!sidebarExpanded())"
-              class="p-2 rounded hover:bg-[var(--sdui-border)] text-[var(--sdui-muted)] hover:text-[var(--sdui-text)] transition-colors text-xs font-bold font-mono tracking-widest cursor-pointer"
-              title="Toggle Sidebar">
-              {{ sidebarExpanded() ? '<<' : '>>' }}
-            </button>
-          </div>
+      <div class="sdui-body-container">
+        <nav class="sdui-global-sidebar" aria-label="Demo navigation">
+          <button
+            type="button"
+            class="sdui-sidebar-action sdui-sidebar-primary"
+            (click)="bladeService.closeAllBlades()"
+            aria-label="Demo gallery"
+            title="Demo gallery"
+            >✨</button
+          >
+          <button
+            type="button"
+            class="sdui-sidebar-action"
+            (click)="toggleTheme()"
+            aria-label="Change demo theme"
+            title="Change demo theme"
+          >
+            🎨
+          </button>
+          <span class="sdui-sidebar-action sdui-sidebar-inactive" aria-hidden="true" title="Telemetry preview">📊</span>
         </nav>
-
-        <!-- Main Content Area Wrapped by SDUI Blade Host! -->
-        <app-sdui-blade-host class="flex-1 relative flex flex-col overflow-hidden bg-[var(--sdui-bg)]">
-          <main class="h-full w-full overflow-auto p-[20px] relative z-0 flex flex-col items-center justify-center bg-[radial-gradient(var(--sdui-border)_1px,transparent_1px)] [background-size:24px_24px]">
-            
-            <div class="p-8 border-2 border-dashed border-[var(--sdui-border)] rounded-lg flex flex-col items-center justify-center bg-[var(--sdui-panel-bg)]/30 max-w-lg text-center">
-              <div class="text-[var(--sdui-muted)] mb-2">
-                <!-- Compass / Hub icon -->
-                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+        <div #demoWorkspace class="sdui-demo-workspace">
+          <app-sdui-blade-host [backdrop]="{ enabled: backdropEnabled(), opacity: 0.36, blur: 3 }">
+            <main id="demo-main" tabindex="-1" class="sdui-work-surface">
+              <div class="sdui-gallery-inner">
+                <div class="sdui-gallery-intro">
+                  <h2>SDUI Framework Orchestrator</h2>
+                  <p>
+                    Explore structural blade sizes, nested journeys, scrolling and footer layouts. Angular mounts each
+                    example through the SDK.
+                  </p>
+                </div>
+                <div class="sdui-gallery-grid">
+                  <button
+                    type="button"
+                    class="sdui-matrix-tile"
+                    [attr.data-selected]="selectedTileId() === 'procedural'"
+                    [attr.aria-pressed]="selectedTileId() === 'procedural'"
+                    (click)="launchOmniverseApp(generateProceduralPayload(), $event)"
+                  >
+                    <span class="sdui-card-heading"
+                      ><span class="sdui-card-icon" aria-hidden="true">🌌</span
+                      ><span class="sdui-card-title">Synthesize Infinite App</span></span
+                    >
+                    <span class="sdui-card-description"
+                      >Generate a fresh layout from the same protocol used by the React and Svelte demos.</span
+                    >
+                    <span class="sdui-card-action">Dispatch layout generator →</span>
+                  </button>
+                  @for (app of pillars; track app.id) {
+                    <button type="button" class="sdui-matrix-tile" [attr.data-selected]="selectedTileId() === app.id" [attr.aria-pressed]="selectedTileId() === app.id" (click)="launchOmniverseApp(app, $event)">
+                      <span class="sdui-card-heading">
+                        <span class="sdui-card-icon" aria-hidden="true">{{ app.icon }}</span>
+                        <span class="sdui-card-heading-text">
+                          <span class="sdui-card-category">{{ app.category }}</span>
+                          <span class="sdui-card-title">{{ app.name }}</span>
+                        </span>
+                      </span>
+                      <span class="sdui-card-description">{{ app.description }}</span>
+                      <span class="sdui-card-action">Load manifest and open blade →</span>
+                    </button>
+                  }
+                  @for (demo of demoCards; track demo.id) {
+                    <button
+                      type="button"
+                      class="sdui-matrix-tile"
+                      [attr.data-selected]="selectedTileId() === demo.id"
+                      [attr.aria-pressed]="selectedTileId() === demo.id"
+                      (click)="openDemo(demo.id, $event)"
+                    >
+                      <span class="sdui-card-heading"
+                        ><span class="sdui-card-icon" aria-hidden="true">{{ demo.icon }}</span
+                        ><span class="sdui-card-heading-text"
+                          ><span class="sdui-card-category">{{ demo.category }}</span
+                          ><span class="sdui-card-title">{{ demo.title }}</span></span
+                        ></span
+                      >
+                      <span class="sdui-card-description">{{ demo.description }}</span>
+                      <span class="sdui-card-action">Load manifest and open blade →</span>
+                    </button>
+                  }
+                </div>
               </div>
-              <h2 class="text-xl font-bold text-[var(--sdui-text)] mb-2">Welcome to SDUI Blade Angular</h2>
-              <p class="text-sm text-[var(--sdui-muted)] mb-4">
-                The core dashboard is completely empty. Click <strong>Virtual Machines</strong> in the sidebar to simulate receiving an <code>xlarge</code> JSON payload from the server, mapping a pristine Full-Width Browse Blade dynamically over the workspace.
-              </p>
+            </main>
+          </app-sdui-blade-host>
+        </div>
+        @if (showJson()) {
+          <aside
+            id="sdui-json-inspector"
+            class="sdui-json-editor-overlay"
+            aria-label="Manifest JSON inspector"
+            (keydown.escape)="closeInspector($event)"
+          >
+            <div class="sdui-json-header">
+              <div>
+                <h2>JSON AST Inspector</h2>
+                <p>Live schema editor</p>
+              </div>
+              <button
+                type="button"
+                class="sdui-json-close-button"
+                aria-label="Close payload inspector"
+                (click)="closeInspector()"
+              >
+                ×
+              </button>
             </div>
-
-          </main>
-        </app-sdui-blade-host>
+            @if (validationError()) {
+              <p class="sdui-json-error-banner" role="alert">{{ validationError() }}</p>
+            }
+            <label class="sdui-json-label" for="sdui-json-input">Manifest JSON</label>
+            <textarea
+              #inspectorTextarea
+              id="sdui-json-input"
+              class="sdui-json-textarea"
+              [value]="jsonInput()"
+              (input)="updateJson($event)"
+              spellcheck="false"
+              placeholder="Select a gallery example to inspect its manifest"
+            ></textarea>
+            <div class="sdui-json-footer">
+              <button
+                type="button"
+                class="sdui-json-apply-button"
+                [disabled]="!jsonInput() || !!validationError()"
+                (click)="applyJson()"
+              >
+                Apply manifest
+              </button>
+            </div>
+          </aside>
+        }
       </div>
     </div>
   `,
   host: {
-    class: 'block w-screen h-screen bg-[var(--sdui-bg)] text-[var(--sdui-text)] overflow-hidden'
-  }
+    class: 'sdui-demo-root',
+  },
 })
-export class AppComponent implements OnInit {
-  private readonly bladeService = inject(SduiBladeService);
-  private readonly router = inject(Router);
-  private readonly route = inject(ActivatedRoute);
+export class AppComponent implements OnInit, AfterViewInit {
+  readonly pillars = CORE_PILLARS;
+  readonly generateProceduralPayload = generateProceduralPayload;
+  readonly demoCards = [
+    {
+      id: 'demo-blade-full',
+      title: 'Full-Width (Default)',
+      category: 'Sizing',
+      description: 'Full work-area blade that preserves navigation.',
+      icon: '🧭',
+    },
+    {
+      id: 'demo-blade-xlarge',
+      title: 'X-Large (1125px)',
+      category: 'Sizing',
+      description: 'Wide workspace for detailed content.',
+      icon: '🗂️',
+    },
+    {
+      id: 'demo-blade-large',
+      title: 'Large (855px)',
+      category: 'Sizing',
+      description: 'A spacious side panel.',
+      icon: '🗃️',
+    },
+    {
+      id: 'demo-blade-medium',
+      title: 'Medium (585px)',
+      category: 'Sizing',
+      description: 'Configuration with nested smaller blades.',
+      icon: '⚙️',
+    },
+    {
+      id: 'demo-blade-small',
+      title: 'Small (315px)',
+      category: 'Sizing',
+      description: 'Compact secondary information.',
+      icon: '📋',
+    },
+    {
+      id: 'demo-blade-menu',
+      title: 'Menu (265px)',
+      category: 'Sizing',
+      description: 'Narrow contextual commands.',
+      icon: '☰',
+    },
+    {
+      id: 'demo-kitchen-sink',
+      title: 'Kitchen Sink (Scroll)',
+      category: 'Behavior',
+      description: 'Scrollable content and fixed controls.',
+      icon: '📜',
+    },
+    {
+      id: 'demo-limited-scroll',
+      title: 'Limited Scroll Block',
+      category: 'Behavior',
+      description: 'Independent content scrolling.',
+      icon: '↕️',
+    },
+    {
+      id: 'demo-stacking',
+      title: 'Journey Parallax Stack',
+      category: 'Behavior',
+      description: 'Nested navigation through the real host.',
+      icon: '🧩',
+    },
+    {
+      id: 'demo-naked',
+      title: 'Naked Decoupling',
+      category: 'Behavior',
+      description: 'Custom content within SDK geometry.',
+      icon: '✨',
+    },
+    {
+      id: 'demo-footer',
+      title: 'Footer Alignments',
+      category: 'Behavior',
+      description: 'Explore footer action placement.',
+      icon: '📐',
+    },
+  ];
 
-  public readonly sidebarExpanded = signal(true);
+  public readonly bladeService = inject(SduiBladeService);
 
-  private isHydrating = true;
+  public readonly currentTheme = signal<'dark' | 'neon' | 'minimal'>('dark');
+  public readonly themeName = computed(
+    () => ({ dark: 'Default Dark', neon: 'Neon Cyberpunk', minimal: 'Light Minimal' })[this.currentTheme()],
+  );
+  public readonly showJson = signal(false);
+  public readonly backdropEnabled = signal(true);
+  public readonly optionsOpen = signal(false);
+  public readonly selectedTileId = signal<string | null>(null);
+  public readonly jsonInput = signal('');
+  public readonly validationError = signal<string | null>(null);
+  private readonly inspectorToggle = viewChild<ElementRef<HTMLButtonElement>>('inspectorToggle');
+  private readonly optionsToggle = viewChild<ElementRef<HTMLButtonElement>>('optionsToggle');
+  private readonly demoHeader = viewChild<ElementRef<HTMLElement>>('demoHeader');
+  private readonly inspectorTextarea = viewChild<ElementRef<HTMLTextAreaElement>>('inspectorTextarea');
+  private readonly demoWorkspace = viewChild<ElementRef<HTMLElement>>('demoWorkspace');
+  private readonly destroyRef = inject(DestroyRef);
+  private lastGalleryTrigger: HTMLElement | null = null;
+  private focusedBladeId: string | null = null;
+  private pendingBladeFocus = false;
 
   // MOCK DATABASE FOR DEEP-LINK HYDRATION
   // Normally the Engine makes REST/GQL calls for these IDs
   private readonly mockDb: Record<string, SduiBladeNode> = {};
 
+  public toggleTheme(): void {
+    const themes = ['dark', 'neon', 'minimal'] as const;
+    this.currentTheme.set(themes[(themes.indexOf(this.currentTheme()) + 1) % themes.length]);
+  }
+
+  public closeOptions(event: Event): void {
+    if (!this.optionsOpen()) return;
+    event.stopPropagation();
+    this.optionsOpen.set(false);
+    this.optionsToggle()?.nativeElement.focus();
+  }
+
+  @HostListener('document:pointerdown', ['$event'])
+  public onDocumentPointerDown(event: PointerEvent): void {
+    if (this.optionsOpen() && !this.demoHeader()?.nativeElement.contains(event.target as Node)) {
+      this.optionsOpen.set(false);
+    }
+  }
+
+  public toggleInspector(): void {
+    if (this.showJson()) {
+      this.closeInspector();
+      return;
+    }
+    this.showJson.set(true);
+  }
+
+  public closeInspector(event?: Event): void {
+    event?.stopPropagation();
+    this.showJson.set(false);
+    requestAnimationFrame(() =>
+      (window.matchMedia('(max-width: 639px)').matches
+        ? this.optionsToggle()
+        : this.inspectorToggle()
+      )?.nativeElement.focus(),
+    );
+  }
+
+  public inspectDemo(id: string, event?: Event): void {
+    if (event?.currentTarget instanceof HTMLElement) this.lastGalleryTrigger = event.currentTarget;
+    const node = this.mockDb[id];
+    if (node) {
+      this.jsonInput.set(JSON.stringify({ version: '1.0', blade: node }, null, 2));
+      this.validationError.set(null);
+    }
+  }
+
+  public openDemo(id: string, event?: Event): void {
+    this.inspectDemo(id, event);
+    const node = this.mockDb[id];
+    if (node) {
+      this.bladeService.setBlades([node]);
+      this.selectedTileId.set(id);
+    }
+  }
+
+  public launchOmniverseApp(app: OmniverseApp, event?: Event): void {
+    if (event?.currentTarget instanceof HTMLElement) this.lastGalleryTrigger = event.currentTarget;
+    try {
+      const manifest = SduiParser.parseManifest(app.payload);
+      const blade = manifest.blade as SduiBladeNode;
+      const demoBlade = this.registerOmniverseBlade(blade);
+      if (app.id.startsWith('chaos-')) {
+        try {
+          sessionStorage.setItem(`sdui-demo-${demoBlade.id}`, JSON.stringify(app.payload));
+        } catch {
+          /* Storage is optional for the demo. */
+        }
+      }
+      this.jsonInput.set(JSON.stringify(app.payload, null, 2));
+      this.validationError.set(null);
+      this.bladeService.setBlades([demoBlade]);
+      this.selectedTileId.set(app.id.startsWith('chaos-') ? 'procedural' : app.id);
+    } catch (error) {
+      this.validationError.set(error instanceof Error ? error.message : 'Invalid manifest JSON');
+      this.showJson.set(true);
+    }
+  }
+
+  private registerOmniverseBlade(blade: SduiBladeNode): SduiBladeNode {
+    const registered = {
+      ...blade,
+      properties: { ...blade.properties, omniverse: true } as SduiBladeNode['properties'],
+    };
+    this.mockDb[registered.id] = registered;
+    const visit = (node: SduiNode): void => {
+      const properties = (node.properties || {}) as Record<string, unknown>;
+      const action = properties['action'] as { payload?: SduiBladeNode } | undefined;
+      if (action?.payload?.type === SduiElementType.Blade) this.registerOmniverseBlade(action.payload);
+      for (const child of node.children || []) visit(child);
+    };
+    for (const child of registered.children || []) visit(child);
+    const actions = registered.properties as Record<string, unknown>;
+    for (const item of [...((actions['toolbar'] || []) as SduiNode[]), ...((actions['footer'] || []) as SduiNode[])])
+      visit(item);
+    return registered;
+  }
+
+  public updateJson(event: Event): void {
+    const value = (event.target as HTMLTextAreaElement).value;
+    this.jsonInput.set(value);
+    if (!value.trim()) {
+      this.validationError.set(null);
+      return;
+    }
+    try {
+      SduiParser.parseManifest(JSON.parse(value));
+      this.validationError.set(null);
+    } catch (error) {
+      this.validationError.set(error instanceof Error ? error.message : 'Invalid manifest JSON');
+    }
+  }
+
+  public applyJson(): void {
+    try {
+      const manifest = SduiParser.parseManifest(JSON.parse(this.jsonInput()));
+      const blade = manifest.blade as SduiBladeNode;
+      this.mockDb[blade.id] = blade;
+      this.bladeService.setBlades([blade]);
+      this.validationError.set(null);
+      this.closeInspector();
+    } catch (error) {
+      this.validationError.set(error instanceof Error ? error.message : 'Invalid manifest JSON');
+    }
+  }
+
+  public launchProceduralApp(event?: Event): void {
+    if (event?.currentTarget instanceof HTMLElement) this.lastGalleryTrigger = event.currentTarget;
+    const id = `demo-procedural-${Date.now()}`;
+    const blade = this.buildProceduralBlade(id);
+    this.mockDb[id] = blade;
+    this.inspectDemo(id);
+    this.bladeService.setBlades([blade]);
+  }
+
+  private buildProceduralBlade(id: string): SduiBladeNode {
+    const sections = ['Overview', 'Activity', 'Next steps'];
+    return {
+      id,
+      type: SduiElementType.Blade,
+      properties: { title: 'Generated Angular Workspace', subtitle: 'Procedural SDK layout', width: 'large' },
+      children: sections.map((title, index) => ({
+        id: `${id}-section-${index}`,
+        type: SduiElementType.Section,
+        properties: { title },
+        children: [
+          {
+            id: `${id}-text-${index}`,
+            type: 'MOCK_TEXT' as SduiElementType,
+            properties: { content: `${title}: this section was assembled from the Angular demo registry.` },
+          },
+        ],
+      })),
+    };
+  }
+
+  public ngAfterViewInit(): void {
+    const workspace = this.demoWorkspace()?.nativeElement;
+    if (!workspace) return;
+    const observer = new MutationObserver(() => this.focusTopBlade());
+    observer.observe(workspace, { childList: true, subtree: true });
+    this.destroyRef.onDestroy(() => observer.disconnect());
+  }
+
+  private focusTopBlade(): void {
+    if (!this.pendingBladeFocus || this.showJson()) return;
+    const workspace = this.demoWorkspace()?.nativeElement;
+    const instances = workspace?.querySelectorAll('.sdui-blade-host-instance:not(.sdui-blade-leave)');
+    const close = instances?.item(instances.length - 1)?.querySelector<HTMLButtonElement>('.sdui-blade-close');
+    if (close) {
+      this.pendingBladeFocus = false;
+      close.focus({ preventScroll: true });
+    }
+  }
+
   constructor() {
+    effect(() => {
+      if (this.showJson()) this.inspectorTextarea()?.nativeElement.focus();
+    });
     // Scaffold initial registry mappings for the sandbox.
-    BLADE_REGISTRY.register(SduiElementType.Blade, async () => (await import('./mock-blades/form-blade.component')).FormBladeComponent);
-    BLADE_REGISTRY.register(SduiElementType.Section, async () => (await import('./mock-blades/section.component')).SectionComponent);
-    BLADE_REGISTRY.register(SduiElementType.Alert, async () => (await import('./mock-blades/alert.component')).AlertComponent);
-    BLADE_REGISTRY.register('MOCK_BUTTON', async () => (await import('./mock-blades/button.component')).ButtonComponent);
-    BLADE_REGISTRY.register('MOCK_INPUT', async () => (await import('./mock-blades/form-input.component')).FormInputComponent);
+    BLADE_REGISTRY.register(
+      SduiElementType.Blade,
+      async () => (await import('./mock-blades/form-blade.component')).FormBladeComponent,
+    );
+    BLADE_REGISTRY.register(
+      SduiElementType.Section,
+      async () => (await import('./mock-blades/section.component')).SectionComponent,
+    );
+    BLADE_REGISTRY.register(
+      SduiElementType.Alert,
+      async () => (await import('./mock-blades/alert.component')).AlertComponent,
+    );
+    BLADE_REGISTRY.register(
+      'MOCK_BUTTON',
+      async () => (await import('./mock-blades/button.component')).ButtonComponent,
+    );
+    BLADE_REGISTRY.register(
+      'MOCK_INPUT',
+      async () => (await import('./mock-blades/form-input.component')).FormInputComponent,
+    );
     BLADE_REGISTRY.register('MOCK_TEXT', async () => (await import('./mock-blades/text.component')).TextComponent);
     BLADE_REGISTRY.register('MOCK_ROW', async () => (await import('./mock-blades/row.component')).RowComponent);
 
     // NEW BEHAVIORAL SPEC REGISTRATIONS
-    BLADE_REGISTRY.register('kitchen-sink', async () => (await import('./mock-blades/kitchen-sink-blade.component')).KitchenSinkBladeComponent);
-    BLADE_REGISTRY.register('limited-scroll', async () => (await import('./mock-blades/limited-scroll-blade.component')).LimitedScrollBladeComponent);
-    BLADE_REGISTRY.register('stack-test', async () => (await import('./mock-blades/stacking-blade.component')).StackingBladeComponent);
-    BLADE_REGISTRY.register('naked-test', async () => (await import('./mock-blades/naked-blade.component')).NakedBladeComponent);
-    BLADE_REGISTRY.register('footer-test', async () => (await import('./mock-blades/footer-alignments-blade.component')).FooterAlignmentsBladeComponent);
+    BLADE_REGISTRY.register(
+      'kitchen-sink',
+      async () => (await import('./mock-blades/kitchen-sink-blade.component')).KitchenSinkBladeComponent,
+    );
+    BLADE_REGISTRY.register(
+      'limited-scroll',
+      async () => (await import('./mock-blades/limited-scroll-blade.component')).LimitedScrollBladeComponent,
+    );
+    BLADE_REGISTRY.register(
+      'stack-test',
+      async () => (await import('./mock-blades/stacking-blade.component')).StackingBladeComponent,
+    );
+    BLADE_REGISTRY.register(
+      'naked-test',
+      async () => (await import('./mock-blades/naked-blade.component')).NakedBladeComponent,
+    );
+    BLADE_REGISTRY.register(
+      'footer-test',
+      async () => (await import('./mock-blades/footer-alignments-blade.component')).FooterAlignmentsBladeComponent,
+    );
 
     this.initializeMockDb();
+    for (const app of CORE_PILLARS) {
+      this.registerOmniverseBlade(SduiParser.parseManifest(app.payload).blade as SduiBladeNode);
+    }
 
-    // Natively observe the Engine's Signal tree. Serialize only Durable Blades to the URL.
-    effect(() => {
-      const active = this.bladeService.activeBlades();
+    // Observe the SDK stack only for focus management. Core records the URL frames.
+    effect(
+      () => {
+        const active = this.bladeService.activeBlades();
+        const topId = active.at(-1)?.id ?? null;
+        if (topId !== this.focusedBladeId) {
+          const hadBlade = this.focusedBladeId !== null;
+          this.focusedBladeId = topId;
+          this.pendingBladeFocus = !!topId;
+          if (topId) requestAnimationFrame(() => this.focusTopBlade());
+          else if (hadBlade)
+            requestAnimationFrame(() => {
+              const target = this.lastGalleryTrigger?.isConnected
+                ? this.lastGalleryTrigger
+                : document.getElementById('demo-main');
+              target?.focus();
+            });
+        }
 
-      // Do not wipe the URL while Angular is booting up!
-      if (this.isHydrating) return;
-
-      const durableIds = active
-        .filter(bladeNode => bladeNode.properties && !(bladeNode.properties as any)['isTransient'])
-        .map(bladeNode => bladeNode.id);
-
-      const durableParams = durableIds.length > 0 ? durableIds.join(',') : null;
-      const currentParams = this.route.snapshot.queryParams['b'] || null;
-
-      // Prevent Navigation Ping-Pong: Only push to history if the state ACTUALLY drifted from the URL
-      if (durableParams !== currentParams) {
-        this.router.navigate([], {
-          relativeTo: this.route,
-          queryParams: { b: durableParams },
-          queryParamsHandling: 'merge',
-          // Important: replaceUrl should be FALSE if we want browser BACK button to work!
-          replaceUrl: false
-        });
-      }
-    }, { allowSignalWrites: true });
+      },
+      { allowSignalWrites: true },
+    );
   }
 
   ngOnInit() {
-    // BROWSER REFRESH REHYDRATION AND BROWSER BACK BUTTON SYNC:
-    // We listen to the router's exact query params. This fires on reload AND on Back/Forward!
-    this.route.queryParams.subscribe(params => {
-      const bParam = params['b'];
-      const activeIds = this.bladeService.activeBlades().map(bladeNode => bladeNode.id);
-
-      if (!bParam) {
-        // If URL has no blades but engine does (Back button pressed to root), clear them.
-        this.bladeService.closeAllBlades();
-      } else {
-        const ids = bParam.split(',');
-
-        // 1. Check if we actually need to change anything
-        if (ids.join(',') === activeIds.join(',')) {
-          return; // Perfect sync, do nothing.
+    this.bladeService.connectHistory((id) => {
+      if (this.mockDb[id]) return this.mockDb[id];
+      const stackingChild = resolveStackingChild(id);
+      if (stackingChild) return stackingChild;
+      if (id.startsWith('blade-proc-')) {
+        try {
+          const saved = sessionStorage.getItem(`sdui-demo-${id}`);
+          if (saved) return this.registerOmniverseBlade(SduiParser.parseManifest(JSON.parse(saved)).blade as SduiBladeNode);
+        } catch {
+          return undefined;
         }
-
-        // 2. ATOMIC SYNC: We bypass `openBlade`/`closeBlade` loop differences because closing 
-        // a root blade via the standard API triggers the "Chain of Death" which accidentally 
-        // obliterates any new blades we just added to the end of the array.
-        // By using `setBlades`, we instruct the Engine to strictly match the URL's snapshot.
-        const mappedNodes = ids.map((id: string) => this.mockDb[id]).filter((mappedNode: any) => !!mappedNode);
-        this.bladeService.setBlades(mappedNodes);
       }
-
-      // Release lock after first parse
-      if (this.isHydrating) {
-        setTimeout(() => this.isHydrating = false, 50);
+      if (/^demo-procedural-\d+$/.test(id)) {
+        this.mockDb[id] = this.buildProceduralBlade(id);
+        return this.mockDb[id];
       }
-    });
+      return undefined;
+    }, 'b');
   }
 
   private initializeMockDb() {
-
     const fullManifest: SduiBladeNode = {
       id: 'demo-blade-full',
       type: SduiElementType.Blade,
       properties: { title: 'Full Width (Responsive)', subtitle: 'flex-1', width: 'full' } as any,
       children: [
         {
-          id: 's1', type: SduiElementType.Section, properties: { title: 'Behavior' },
+          id: 's1',
+          type: SduiElementType.Section,
+          properties: { title: 'Behavior' },
           children: [
-            { id: 't1', type: 'MOCK_TEXT' as any, properties: { content: 'This blade claims all available horizontal space (flex-1). It acts as a powerful root Dashboard.' } },
-            { id: 'btn-sub', type: 'MOCK_BUTTON' as any, properties: { label: '＋ Spawn Large Blade', actionPayload: { id: 'demo-blade-large' } } }
-          ]
-        }
-      ]
+            {
+              id: 't1',
+              type: 'MOCK_TEXT' as any,
+              properties: {
+                content:
+                  'This blade claims all available horizontal space (flex-1). It acts as a powerful root Dashboard.',
+              },
+            },
+            {
+              id: 'btn-sub',
+              type: 'MOCK_BUTTON' as any,
+              properties: { label: '＋ Spawn Large Blade', actionPayload: { id: 'demo-blade-large' } },
+            },
+          ],
+        },
+      ],
     };
 
     const xlargeManifest: SduiBladeNode = {
@@ -284,13 +628,23 @@ export class AppComponent implements OnInit {
       properties: { title: 'X-Large Constraint', width: 'xlarge' } as any,
       children: [
         {
-          id: 's2', type: SduiElementType.Section, properties: { title: '1125px Structural Limit' },
+          id: 's2',
+          type: SduiElementType.Section,
+          properties: { title: '1125px Structural Limit' },
           children: [
-            { id: 't2', type: 'MOCK_TEXT' as any, properties: { content: 'Perfect for wide data grids or complex configuration wizards.' } },
-            { id: 'btn2', type: 'MOCK_BUTTON' as any, properties: { label: '＋ Nested Large Blade', actionPayload: { id: 'demo-blade-large' } } }
-          ]
-        }
-      ]
+            {
+              id: 't2',
+              type: 'MOCK_TEXT' as any,
+              properties: { content: 'Perfect for wide data grids or complex configuration wizards.' },
+            },
+            {
+              id: 'btn2',
+              type: 'MOCK_BUTTON' as any,
+              properties: { label: '＋ Nested Large Blade', actionPayload: { id: 'demo-blade-large' } },
+            },
+          ],
+        },
+      ],
     };
 
     const largeManifest: SduiBladeNode = {
@@ -299,13 +653,23 @@ export class AppComponent implements OnInit {
       properties: { title: 'Large Constraint', width: 'large' } as any,
       children: [
         {
-          id: 's3', type: SduiElementType.Section, properties: { title: '855px Structural Limit' },
+          id: 's3',
+          type: SduiElementType.Section,
+          properties: { title: '855px Structural Limit' },
           children: [
-            { id: 't3', type: 'MOCK_TEXT' as any, properties: { content: 'The standard architectural width for primary resource overviews.' } },
-            { id: 'btn3', type: 'MOCK_BUTTON' as any, properties: { label: '＋ Nested Medium Blade', actionPayload: { id: 'demo-blade-medium' } } }
-          ]
-        }
-      ]
+            {
+              id: 't3',
+              type: 'MOCK_TEXT' as any,
+              properties: { content: 'The standard architectural width for primary resource overviews.' },
+            },
+            {
+              id: 'btn3',
+              type: 'MOCK_BUTTON' as any,
+              properties: { label: '＋ Nested Medium Blade', actionPayload: { id: 'demo-blade-medium' } },
+            },
+          ],
+        },
+      ],
     };
 
     const mediumManifest: SduiBladeNode = {
@@ -314,13 +678,23 @@ export class AppComponent implements OnInit {
       properties: { title: 'Medium Constraint', width: 'medium' } as any,
       children: [
         {
-          id: 's4', type: SduiElementType.Section, properties: { title: '585px Structural Limit' },
+          id: 's4',
+          type: SduiElementType.Section,
+          properties: { title: '585px Structural Limit' },
           children: [
-            { id: 't4', type: 'MOCK_TEXT' as any, properties: { content: 'The classic side-panel width used for deep configuration forms or tagging.' } },
-            { id: 'btn4', type: 'MOCK_BUTTON' as any, properties: { label: '＋ Nested Small Blade', actionPayload: { id: 'demo-blade-small' } } }
-          ]
-        }
-      ]
+            {
+              id: 't4',
+              type: 'MOCK_TEXT' as any,
+              properties: { content: 'The classic side-panel width used for deep configuration forms or tagging.' },
+            },
+            {
+              id: 'btn4',
+              type: 'MOCK_BUTTON' as any,
+              properties: { label: '＋ Nested Small Blade', actionPayload: { id: 'demo-blade-small' } },
+            },
+          ],
+        },
+      ],
     };
 
     const smallManifest: SduiBladeNode = {
@@ -329,13 +703,23 @@ export class AppComponent implements OnInit {
       properties: { title: 'Small Constraint', width: 'small' } as any,
       children: [
         {
-          id: 's5', type: SduiElementType.Section, properties: { title: '315px Structural Limit' },
+          id: 's5',
+          type: SduiElementType.Section,
+          properties: { title: '315px Structural Limit' },
           children: [
-            { id: 't5', type: 'MOCK_TEXT' as any, properties: { content: 'Used for tiny flyouts or quick action menus.' } },
-            { id: 'btn5', type: 'MOCK_BUTTON' as any, properties: { label: '＋ Nested Menu Blade', actionPayload: { id: 'demo-blade-menu' } } }
-          ]
-        }
-      ]
+            {
+              id: 't5',
+              type: 'MOCK_TEXT' as any,
+              properties: { content: 'Used for tiny flyouts or quick action menus.' },
+            },
+            {
+              id: 'btn5',
+              type: 'MOCK_BUTTON' as any,
+              properties: { label: '＋ Nested Menu Blade', actionPayload: { id: 'demo-blade-menu' } },
+            },
+          ],
+        },
+      ],
     };
 
     const menuManifest: SduiBladeNode = {
@@ -344,37 +728,50 @@ export class AppComponent implements OnInit {
       properties: { title: 'Menu Constraint', width: 'menu' } as any,
       children: [
         {
-          id: 's6', type: SduiElementType.Section, properties: { title: '265px Structural Limit' },
+          id: 's6',
+          type: SduiElementType.Section,
+          properties: { title: '265px Structural Limit' },
           children: [
-            { id: 't6', type: 'MOCK_TEXT' as any, properties: { content: 'The absolute thinnest blade form-factor, strictly for tertiary navigation arrays.' } }
-          ]
-        }
-      ]
+            {
+              id: 't6',
+              type: 'MOCK_TEXT' as any,
+              properties: {
+                content: 'The absolute thinnest blade form-factor, strictly for tertiary navigation arrays.',
+              },
+            },
+          ],
+        },
+      ],
     };
 
     const kitchenSinkManifest: SduiBladeNode = {
-      id: 'demo-kitchen-sink', type: 'kitchen-sink' as any,
-      properties: { title: 'Kitchen Sink', width: 'large' } as any
+      id: 'demo-kitchen-sink',
+      type: 'kitchen-sink' as any,
+      properties: { title: 'Kitchen Sink', width: 'large' } as any,
     };
 
     const limitedScrollManifest: SduiBladeNode = {
-      id: 'demo-limited-scroll', type: 'limited-scroll' as any,
-      properties: { title: 'Limited Overflow', width: 'medium' } as any
+      id: 'demo-limited-scroll',
+      type: 'limited-scroll' as any,
+      properties: { title: 'Limited Overflow', width: 'medium' } as any,
     };
 
     const stackingManifest: SduiBladeNode = {
-      id: 'demo-stacking', type: 'stack-test' as any,
-      properties: { depth: 1, width: 'xlarge' } as any
+      id: 'demo-stacking',
+      type: 'stack-test' as any,
+      properties: { depth: 1, width: 'xlarge' } as any,
     };
 
     const nakedManifest: SduiBladeNode = {
-      id: 'demo-naked', type: 'naked-test' as any,
-      properties: { width: 'large' } as any
+      id: 'demo-naked',
+      type: 'naked-test' as any,
+      properties: { width: 'large' } as any,
     };
 
     const footerManifest: SduiBladeNode = {
-      id: 'demo-footer', type: 'footer-test' as any,
-      properties: { width: 'medium' } as any
+      id: 'demo-footer',
+      type: 'footer-test' as any,
+      properties: { width: 'medium' } as any,
     };
 
     this.mockDb['demo-blade-full'] = fullManifest;
@@ -397,4 +794,3 @@ export class AppComponent implements OnInit {
     (smallManifest.children![0] as any).children[1].properties.actionPayload = menuManifest;
   }
 }
-

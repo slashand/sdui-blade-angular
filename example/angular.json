@@ -44,9 +44,7 @@
             "outputPath": "dist/example",
             "index": "src/index.html",
             "browser": "src/main.ts",
-            "polyfills": [
-              "zone.js"
-            ],
+            "polyfills": ["zone.js"],
             "tsConfig": "tsconfig.app.json",
             "assets": [
               {
@@ -54,9 +52,7 @@
                 "input": "public"
               }
             ],
-            "styles": [
-              "src/styles.css"
-            ],
+            "styles": ["src/styles.css"],
             "scripts": []
           },
           "configurations": {
@@ -90,9 +86,9 @@
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
-            "prebundle": {
-              "exclude": ["@slashand/sdui-blade-angular"]
-            }
+            "host": "127.0.0.1",
+            "port": 4200,
+            "prebundle": false
           },
           "configurations": {
             "production": {
