@@ -1,13 +1,24 @@
 import { CommonModule, isPlatformBrowser, NgComponentOutlet } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, Injector, input, OnInit, PLATFORM_ID, signal, Type } from '@angular/core';
-import { SduiBladeNode } from '@slashand/sdui-blade-core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  Injector,
+  input,
+  PLATFORM_ID,
+  signal,
+  Type,
+} from '@angular/core';
+import { resolveSduiBackdropConfig, SduiBackdropConfig, SduiBladeNode } from '@slashand/sdui-blade-core';
 import { BLADE_REGISTRY } from './sdui-blade-registry';
 import { SduiBladeService, SDUI_BLADE_NODE } from './sdui-blade.service';
 
 /**
- * The Root DOM Container for the structured Blade UI system. 
+ * The Root DOM Container for the structured Blade UI system.
  * This component listens to the active `SduiBladeService` and materializes generic JSON requests into real Angular Standalone Components.
- * 
+ *
  * CORE RESPONSIBILITIES:
  * 1. Enact the "Inversion of Mount Points" by wrapping dynamically loaded Angular components in strict CSS boundaries.
  * 2. Automate structural layout (Width constraints, z-index elevation, and overlapping offset).
@@ -19,21 +30,21 @@ import { SduiBladeService, SDUI_BLADE_NODE } from './sdui-blade.service';
   imports: [CommonModule, NgComponentOutlet],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
-    'class': 'sdui-blade-host',
-    '(document:keydown.escape)': 'onEscapeKey()'
+    class: 'sdui-blade-host',
+    '(document:keydown.escape)': 'onEscapeKey()',
   },
   template: `
     <!-- The Root Application Context -->
     <ng-content></ng-content>
 
     @if (hasBladesForRegion()) {
-      @for (blade of bladesForThisRegion(); track blade.id; let bladeIndex = $index) {
-        <div 
+      @for (blade of renderableBlades(); track blade.id; let bladeIndex = $index) {
+        <div
           class="sdui-blade-host-instance"
           animate.enter="sdui-blade-enter"
           animate.leave="sdui-blade-leave"
           [class.sdui-root-blade]="bladeIndex === 0"
-          [class.sdui-transient-backdrop]="isTransient(blade)"
+          [class.sdui-transient-backdrop]="hasBackdrop(blade, bladeIndex)"
           [style.--sdui-backdrop-bg]="getBackdropColor(blade)"
           [style.--sdui-backdrop-blur]="getBackdropBlur(blade)"
           [style.zIndex]="10 + bladeIndex"
@@ -43,14 +54,20 @@ import { SduiBladeService, SDUI_BLADE_NODE } from './sdui-blade.service';
           (click)="onBackdropClick($event, blade, bladeIndex)"
         >
           <!-- Wrapper enforcing rigid SDUI constraints, mimicking the framer-motion approach -->
-          <div class="sdui-blade-host-scroll-boundary"
-               [style.--sdui-blade-custom-w]="getCustomWidthPx(blade)"
-               [ngClass]="[
-                 getBoundarySizeClass(blade)
-               ]"
-               (click)="onScrollBoundaryClick($event, blade, bladeIndex)">
+          <div
+            class="sdui-blade-host-scroll-boundary"
+            [style.--sdui-blade-custom-w]="getCustomWidthPx(blade)"
+            [ngClass]="[getBoundarySizeClass(blade)]"
+            (click)="onScrollBoundaryClick($event, blade, bladeIndex)"
+          >
             @if (resolvedComponents()[blade.type]) {
-              <ng-container *ngComponentOutlet="resolvedComponents()[blade.type]!; inputs: getComponentInputs(blade); injector: getBladeInjector(blade)"></ng-container>
+              <ng-container
+                *ngComponentOutlet="
+                  resolvedComponents()[blade.type]!;
+                  inputs: getComponentInputs(blade);
+                  injector: getBladeInjector(blade)
+                "
+              ></ng-container>
             } @else {
               <ng-content select="[fallback-loader]"></ng-content>
             }
@@ -58,9 +75,9 @@ import { SduiBladeService, SDUI_BLADE_NODE } from './sdui-blade.service';
         </div>
       }
     }
-  `
+  `,
 })
-export class SduiBladeHostComponent implements OnInit {
+export class SduiBladeHostComponent {
   // ---------------------------------------------------------------------------
   // PROPERTIES (Alphabetized)
   // ---------------------------------------------------------------------------
@@ -82,14 +99,22 @@ export class SduiBladeHostComponent implements OnInit {
    * Functionality: Used natively by Angular DI to tear down long-running functions on death.
    * Impact on others: Unbinds the registry polling loop when this Host component unmounts.
    */
-  private readonly destroyRef = inject(DestroyRef);
+  private readonly loadingTypes = new Set<string>();
+  private readonly failedTypes = signal<string[]>([]);
 
   /**
    * Quick boolean flag indicating if any blades exist for this host window.
    * Functionality: Controls the `@if` rendering block for the blade overlay instances.
    * Impact on others: Short-circuits the template to avoid evaluating an empty blade stack.
    */
-  protected hasBladesForRegion = computed(() => this.bladesForThisRegion().length > 0);
+  protected renderableBlades = computed(() => {
+    const resolved = this.resolvedComponents();
+    const failed = this.failedTypes();
+    return this.bladesForThisRegion().filter(
+      (blade) => !!resolved[blade.type] || failed.includes(blade.type) || !BLADE_REGISTRY.getLoader(blade.type),
+    );
+  });
+  protected hasBladesForRegion = computed(() => this.renderableBlades().length > 0);
 
   /**
    * Tokens holding the current javascript execution environment.
@@ -105,6 +130,9 @@ export class SduiBladeHostComponent implements OnInit {
    */
   region = input<string>('global');
 
+  /** Host-level backdrop defaults; individual blade payloads may override them. */
+  backdrop = input<SduiBackdropConfig>({});
+
   /**
    * Tracks lazy-loaded Angular components as they resolve from the internal Blade Registry.
    * Functionality: Translates `sdui-type` string values into memory-addressable component functions.
@@ -118,7 +146,6 @@ export class SduiBladeHostComponent implements OnInit {
    * Impact on others: Central store that dictates layout engine status across all Host nodes.
    */
   protected sduiBladeService = inject(SduiBladeService);
-
 
   // ---------------------------------------------------------------------------
   // METHODS (Alphabetized)
@@ -145,7 +172,7 @@ export class SduiBladeHostComponent implements OnInit {
     if (!injector) {
       injector = Injector.create({
         providers: [{ provide: SDUI_BLADE_NODE, useValue: bladeTarget }],
-        parent: this.defaultInjector
+        parent: this.defaultInjector,
       });
       this.injectorCache.set(id, injector);
     }
@@ -158,11 +185,11 @@ export class SduiBladeHostComponent implements OnInit {
    * Impact on others: Mock blades universally depend on this shape to identify themselves.
    */
   protected getComponentInputs(bladeTarget: SduiBladeNode): Record<string, unknown> {
-    const props = bladeTarget.properties as Record<string, unknown> || {};
+    const props = (bladeTarget.properties as Record<string, unknown>) || {};
     return {
       bladeId: bladeTarget.id,
       node: bladeTarget,
-      inputs: props['inputs']
+      inputs: props['inputs'],
     };
   }
 
@@ -188,14 +215,14 @@ export class SduiBladeHostComponent implements OnInit {
       '7xl': 'sdui-boundary-size-7xl',
     };
     const props = (bladeTarget.properties as Record<string, unknown>) || {};
-    const sizeRaw = props['size'] || props['width'] || 'medium';
+    const sizeRaw = props['width'] ?? props['size'] ?? 'large';
     const sizeStr = String(sizeRaw);
-    
+
     // If it's a known schema string, map it
     if (sizeMap[sizeStr]) {
       return sizeMap[sizeStr];
     }
-    
+
     // Otherwise it's a structural number (e.g. 800)
     return 'sdui-boundary-size-custom';
   }
@@ -213,32 +240,45 @@ export class SduiBladeHostComponent implements OnInit {
   protected getCustomWidthPx(bladeTarget: SduiBladeNode): string | null {
     if (!this.isCustomWidth(bladeTarget)) return null;
     const props = (bladeTarget.properties as Record<string, unknown>) || {};
-    const sizeRaw = props['size'] || props['width'];
+    const sizeRaw = props['width'] ?? props['size'];
     if (!sizeRaw) return null;
-    return typeof sizeRaw === 'number' ? `${sizeRaw}px` : (String(sizeRaw).endsWith('px') ? String(sizeRaw) : `${sizeRaw}px`);
+    return typeof sizeRaw === 'number'
+      ? `${sizeRaw}px`
+      : String(sizeRaw).endsWith('px')
+        ? String(sizeRaw)
+        : `${sizeRaw}px`;
   }
 
-  /**
-   * Determines if a blade requires the 'transient' dimming backdrop overlay.
-   * Functionality: Inspects `bladeNode.properties.isTransient`.
-   * Impact on others: Toggles the `.sdui-transient-backdrop` CSS class which obscures blades behind it.
-   */
-  protected isTransient(bladeNode: SduiBladeNode): boolean {
-    return !!(bladeNode.properties as Record<string, unknown>)?.['isTransient'];
+  protected resolveBackdrop(bladeNode: SduiBladeNode): Required<SduiBackdropConfig> {
+    return resolveSduiBackdropConfig({ ...this.backdrop(), ...bladeNode.properties.backdrop });
+  }
+
+  protected hasBackdrop(bladeNode: SduiBladeNode, index: number): boolean {
+    const legacyTransient = !!bladeNode.properties.isTransient;
+    const rootBackdropRequested = this.backdrop().enabled === true || bladeNode.properties.backdrop?.enabled === true;
+    return (
+      index === this.renderableBlades().length - 1 &&
+      (index > 0 || legacyTransient || rootBackdropRequested) &&
+      this.resolveBackdrop(bladeNode).enabled
+    );
   }
 
   /**
    * Optional custom css rgba string for the transient backdrop overriding default darkness.
    */
   protected getBackdropColor(bladeNode: SduiBladeNode): string | null {
-    return (bladeNode.properties as Record<string, unknown>)?.['backdropColor'] as string || null;
+    const legacyColor = bladeNode.properties.backdropColor;
+    const opacity = this.resolveBackdrop(bladeNode).opacity;
+    return legacyColor || `rgb(0 0 0 / ${Math.min(1, Math.max(0, opacity))})`;
   }
 
   /**
    * Optional custom css blur size (e.g. 8px) for the transient backdrop overriding default blur.
    */
   protected getBackdropBlur(bladeNode: SduiBladeNode): string | null {
-    return (bladeNode.properties as Record<string, unknown>)?.['backdropBlur'] as string || null;
+    const legacyBlur = bladeNode.properties.backdropBlur;
+    const blur = this.resolveBackdrop(bladeNode).blur;
+    return legacyBlur || `${Math.max(0, blur)}px`;
   }
 
   /**
@@ -246,32 +286,27 @@ export class SduiBladeHostComponent implements OnInit {
    * Functionality: Triggers recursive polling checking if all active blades have resolve mount-paths mapped.
    * Impact on others: Spawns the physical `.then(component)` micro-tasks creating visual UI frames upon registration.
    */
-  ngOnInit() {
-    // A simplified effect tracking un-resolved component types and triggering lazy loads.
-    if (isPlatformBrowser(this.platformId)) {
-      const intervalId = setInterval(() => {
-        const blades = this.bladesForThisRegion();
-        const currentRes = this.resolvedComponents();
-
-        const newRes = { ...currentRes };
-
-        for (const bladeNode of blades) {
-          if (!newRes[bladeNode.type]) {
-            const loader = BLADE_REGISTRY.getLoader(bladeNode.type);
-            if (loader) {
-              loader().then(component => {
-                this.resolvedComponents.update((registry: Record<string, Type<unknown>>) => ({ ...registry, [bladeNode.type]: component }));
-              });
-            } else {
-              console.warn(`[SDUI Blade Engine] No Angular component registered for JSON type: '${bladeNode.type}'`);
-            }
-          }
-        }
-      }, 100);
-
-      this.destroyRef.onDestroy(() => clearInterval(intervalId));
+  private readonly resolveActiveComponents = effect(() => {
+    if (!isPlatformBrowser(this.platformId)) return;
+    const blades = this.bladesForThisRegion();
+    const resolved = this.resolvedComponents();
+    const failed = this.failedTypes();
+    for (const blade of blades) {
+      if (resolved[blade.type] || failed.includes(blade.type) || this.loadingTypes.has(blade.type)) continue;
+      const loader = BLADE_REGISTRY.getLoader(blade.type);
+      if (!loader) continue;
+      this.loadingTypes.add(blade.type);
+      loader()
+        .then((component) => {
+          this.resolvedComponents.update((registry) => ({ ...registry, [blade.type]: component }));
+        })
+        .catch((error: unknown) => {
+          console.error(`[SDUI Blade Engine] Failed to load '${blade.type}'`, error);
+          this.failedTypes.update((types) => [...types, blade.type]);
+        })
+        .finally(() => this.loadingTypes.delete(blade.type));
     }
-  }
+  });
 
   /**
    * Executes blade closure if a backdrop click happened exactly on the topmost overlay layer.
@@ -289,7 +324,12 @@ export class SduiBladeHostComponent implements OnInit {
 
     const active = this.bladesForThisRegion();
     // Only close if they clicked the exact backdrop of the TOPMOST blade
-    if (index === active.length - 1 && !blade.properties.disableClose) {
+    if (
+      index === active.length - 1 &&
+      this.hasBackdrop(blade, index) &&
+      this.resolveBackdrop(blade).closeOnClick &&
+      !blade.properties.disableClose
+    ) {
       this.sduiBladeService.closeTopBlade();
     }
   }

@@ -20,10 +20,10 @@ describe('SduiBladeService', () => {
             onPopState: vi.fn(),
             onHashChange: vi.fn(),
             pushState: vi.fn(),
-            replaceState: vi.fn()
-          }
-        }
-      ]
+            replaceState: vi.fn(),
+          },
+        },
+      ],
     });
     service = TestBed.inject(SduiBladeService);
   });
@@ -31,7 +31,7 @@ describe('SduiBladeService', () => {
   const createMockBlade = (id: string, properties: Partial<SduiBladeNode['properties']> = {}): SduiBladeNode => ({
     id,
     type: SduiElementType.Blade,
-    properties: { title: 'Test', ...properties } as SduiBladeNode['properties']
+    properties: { title: 'Test', ...properties } as SduiBladeNode['properties'],
   });
 
   it('should be created with an empty stack', () => {
@@ -109,5 +109,38 @@ describe('SduiBladeService', () => {
     expect(service.activeBlades()[0].properties['title']).toBe('New Region');
     // Ensure it was a partial merge, keeping existing properties
     expect(service.activeBlades()[0].properties['region']).toBe('sidebar');
+  });
+
+  it('restores one nested blade per browser navigation without writing another history frame', () => {
+    window.history.replaceState(null, '', '/');
+    const push = vi.spyOn(window.history, 'pushState');
+    const root = createMockBlade('root');
+    const child = createMockBlade('child', { width: 'small', isTransient: true });
+    const grandchild = createMockBlade('grandchild', { isTransient: true });
+    service.connectHistory((id) => (id === 'root' ? root : undefined), 'b');
+    service.openBlade(root);
+    service.openBlade(child);
+    service.openBlade(grandchild);
+    expect(push).toHaveBeenCalledTimes(3);
+    expect(new URL(window.location.href).searchParams.get('b')).toBe('root');
+    expect(window.history.state.__sduiBlades.ids).toEqual(['root', 'child', 'grandchild']);
+
+    window.history.replaceState({ __sduiBlades: { ids: ['root', 'child'], durable: '["root"]' } }, '', '/?b=root');
+    window.dispatchEvent(new PopStateEvent('popstate'));
+    expect(service.activeBlades().map((node) => node.id)).toEqual(['root', 'child']);
+    expect(service.activeBlades()[1].properties['width']).toBe('small');
+    expect(push).toHaveBeenCalledTimes(3);
+
+    window.history.replaceState({ __sduiBlades: { ids: ['root'], durable: '["root"]' } }, '', '/?b=root');
+    window.dispatchEvent(new PopStateEvent('popstate'));
+    expect(service.activeBlades().map((node) => node.id)).toEqual(['root']);
+
+    window.history.replaceState({ __sduiBlades: { ids: ['root', 'child'], durable: '["root"]' } }, '', '/?b=root');
+    window.dispatchEvent(new PopStateEvent('popstate'));
+    expect(service.activeBlades().map((node) => node.id)).toEqual(['root', 'child']);
+    const stableStack = service.activeBlades();
+    window.dispatchEvent(new PopStateEvent('popstate'));
+    expect(service.activeBlades()).toBe(stableStack);
+    push.mockRestore();
   });
 });

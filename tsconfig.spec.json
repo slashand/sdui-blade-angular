@@ -3,7 +3,7 @@
   "compilerOptions": {
     "outDir": "./dist/out-tsc",
     "module": "ES2022",
-    "types": ["vitest/globals", "node"]
+    "types": ["vitest/globals"]
   },
   "files": [],
   "include": ["src/**/*.spec.ts", "src/**/*.d.ts", "src/test-setup.ts"]
