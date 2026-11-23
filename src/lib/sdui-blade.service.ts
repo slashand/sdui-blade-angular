@@ -1,6 +1,6 @@
-import { PlatformLocation, DOCUMENT, isPlatformBrowser } from '@angular/common';
-import { computed, inject, Injectable, InjectionToken, PLATFORM_ID, signal } from '@angular/core';
-import { SduiBladeNode } from '@slashand/sdui-blade-core';
+import { DOCUMENT, isPlatformBrowser } from '@angular/common';
+import { computed, inject, Injectable, InjectionToken, OnDestroy, PLATFORM_ID, signal } from '@angular/core';
+import { BladeHistory, SduiBladeNode } from '@slashand/sdui-blade-core';
 
 /**
  * Injection Token to natively access the surrounding blade context from ANY child component
@@ -11,15 +11,15 @@ export const SDUI_BLADE_NODE = new InjectionToken<Required<SduiBladeNode>>('SDUI
 /**
  * Native Angular v21 Signal-based service orchestrating the SDUI JSON logic and Blade Stack pipeline.
  * (We avoid Zustand in Angular in favor of native reactive primitives).
- * 
+ *
  * CORE RESPONSIBILITIES:
  * 1. Maintain the `activeBlades` Signal, identifying the precise deterministic layout state of the Journey Protocol.
  * 2. Handle programmatic push, pop, and reset methods for transient layout elements.
  */
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
-export class SduiBladeService {
+export class SduiBladeService implements OnDestroy {
   /**
    * The single source of truth for all currently active blade nodes.
    * Modifying this underlying signal will immediately cause the Orchestrator to mount or unmount components.
@@ -39,12 +39,10 @@ export class SduiBladeService {
    */
   public readonly hasActiveBlades = computed(() => this._activeBlades().length > 0);
 
-  /**
-   * Internal tracking flag for programmatic back navigation.
-   * Functionality: Prevents circular hash serialization when reversing the traversal stack.
-   * Impact on others: N/A in the current un-hashed platform.
-   */
-  private isProgrammaticBack = false;
+  /** The host resolves cold links; the cache restores payloads opened during this session. */
+  private history: BladeHistory | null = null;
+  private stopHistory: (() => void) | null = null;
+  private readonly payloadCache = new Map<string, Required<SduiBladeNode>>();
 
   /**
    * Platform ID token.
@@ -53,38 +51,27 @@ export class SduiBladeService {
    */
   private readonly platformId = inject(PLATFORM_ID);
 
-  /**
-   * Platform Location token.
-   * Functionality: Provides normalized access to the browser's history and URL state.
-   * Impact on others: Used for hash-routing parsing if implemented.
-   */
-  private readonly platformLocation = inject(PlatformLocation);
   private readonly document = inject(DOCUMENT);
 
-  constructor() {
-    if (isPlatformBrowser(this.platformId)) {
-      // 1. Initial hydration from URL
-      const initialHash = this.platformLocation.hash;
-      if (initialHash) {
-        const nodes = this.deserializeFromHash(initialHash);
-        if (nodes.length > 0) {
-          this._activeBlades.set(nodes);
-        }
-      }
+  /** Connect after the host has registered its blade payloads. Core owns all URL frames. */
+  connectHistory(resolve: (id: string) => SduiBladeNode | undefined, parameter = 'blades'): void {
+    if (!isPlatformBrowser(this.platformId) || !this.document.defaultView) return;
+    this.stopHistory?.();
+    this.history = new BladeHistory(this.document.defaultView, parameter);
+    const hydrate = (ids: string[]) => {
+      const active = this._activeBlades();
+      if (ids.length === active.length && ids.every((id, index) => id === active[index].id)) return;
+      const nodes = ids
+        .map((id) => this.payloadCache.get(id) ?? resolve(id))
+        .filter((node): node is SduiBladeNode => !!node);
+      this._activeBlades.set(nodes as Required<SduiBladeNode>[]);
+    };
+    hydrate(this.history.readDurable());
+    this.stopHistory = this.history.listen(hydrate);
+  }
 
-      // 2. Listen to browser Back/Forward popstate events
-      this.platformLocation.onHashChange(() => {
-        this.isProgrammaticBack = true;
-        const hash = this.platformLocation.hash;
-        const nodes = this.deserializeFromHash(hash);
-        this._activeBlades.set(nodes);
-        
-        // Reset the flag asynchronously to allow the update to process
-        setTimeout(() => {
-          this.isProgrammaticBack = false;
-        }, 0);
-      });
-    }
+  ngOnDestroy(): void {
+    this.stopHistory?.();
   }
 
   /**
@@ -95,7 +82,7 @@ export class SduiBladeService {
   closeAllBlades(): void {
     if (this._activeBlades().length > 0) {
       this._activeBlades.set([]);
-      this.updateURLHash([], false);
+      this.recordHistory([]);
     }
   }
 
@@ -107,11 +94,11 @@ export class SduiBladeService {
    */
   closeBlade(id: string): void {
     const blades = this._activeBlades();
-    const index = blades.findIndex(bladeNode => bladeNode.id === id);
+    const index = blades.findIndex((bladeNode) => bladeNode.id === id);
     if (index > -1) {
       const newBlades = blades.slice(0, index);
       this._activeBlades.set(newBlades);
-      this.updateURLHash(newBlades, false);
+      this.recordHistory(newBlades);
     }
   }
 
@@ -125,37 +112,8 @@ export class SduiBladeService {
     if (blades.length > 0) {
       const newBlades = blades.slice(0, -1);
       this._activeBlades.set(newBlades);
-      this.updateURLHash(newBlades, false);
+      this.recordHistory(newBlades);
     }
-  }
-
-  /**
-   * Internal mechanism to reconstruct a stack of blade nodes from a URL hash payload.
-   * Functionality: Parses encoded URL fragments back into `SduiBladeNode` objects.
-   * Impact on others: Used during initial bootstrap or back-navigation logic if deep-linking is supported.
-   */
-  private deserializeFromHash(hash: string): Required<SduiBladeNode>[] {
-    const cleanHash = hash.replace(/^#/, '');
-    if (!cleanHash) return [];
-    return cleanHash.split('/').map(segment => {
-      let type = segment;
-      const properties: Record<string, any> = {};
-      const paren = segment.indexOf('(');
-      if (paren > -1 && segment.endsWith(')')) {
-        type = segment.substring(0, paren);
-        const pairsStr = segment.substring(paren + 1, segment.length - 1);
-        pairsStr.split(',').forEach(pairString => {
-          const [propertyKey, propertyValue] = pairString.split('=');
-          if (propertyKey && propertyValue !== undefined) properties[decodeURIComponent(propertyKey)] = decodeURIComponent(propertyValue);
-        });
-      }
-      return {
-        id: `${type}_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-        type,
-        properties,
-        children: []
-      } as unknown as Required<SduiBladeNode>;
-    });
   }
 
   /**
@@ -173,45 +131,27 @@ export class SduiBladeService {
       if (lastBlade && lastBlade.id === id) {
         // Safe update in place, don't flood history
         const newBlades = [...blades];
-        newBlades[newBlades.length - 1] = { ...lastBlade, properties: node.properties || {}, children: node.children || lastBlade.children } as unknown as Required<SduiBladeNode>;
-        this.updateURLHash(newBlades, true);
+        newBlades[newBlades.length - 1] = {
+          ...lastBlade,
+          properties: node.properties || {},
+          children: node.children || lastBlade.children,
+        } as unknown as Required<SduiBladeNode>;
+        this.recordHistory(newBlades, true);
         return newBlades;
       }
 
-      const newBlades = [...blades, { id, type: node.type, properties: node.properties || {}, children: node.children || [] } as unknown as Required<SduiBladeNode>];
-      this.updateURLHash(newBlades, false);
+      const newBlades = [
+        ...blades,
+        {
+          id,
+          type: node.type,
+          properties: node.properties || {},
+          children: node.children || [],
+        } as unknown as Required<SduiBladeNode>,
+      ];
+      this.recordHistory(newBlades);
       return newBlades;
     });
-  }
-
-  /**
-   * Internal mechanism to convert an array of blade nodes into a shareable URL hash.
-   * Functionality: Strips out transient properties and skips hashing for background blades.
-   * Impact on others: Determines which blades are considered "permanent" enough to bookmark.
-   */
-  private serializeToHash(nodes: Required<SduiBladeNode>[]): string {
-    if (nodes.length === 0) return '';
-    // Transient blades or sidebars should not pollute the shareable URL
-    const validNodes = nodes.filter(bladeNode => {
-      const props = bladeNode.properties as Record<string, unknown> | undefined;
-      return !props?.['isTransient'] && !props?.['skipUrl'];
-    });
-    if (validNodes.length === 0) return '';
-
-    const segments = validNodes.map(bladeNode => {
-      let segment = String(bladeNode.type);
-      if (bladeNode.properties && Object.keys(bladeNode.properties).length > 0) {
-        const pairs: string[] = [];
-        for (const [propertyKey, propertyValue] of Object.entries(bladeNode.properties)) {
-          if (propertyKey !== 'isTransient' && propertyKey !== 'skipUrl' && typeof propertyValue !== 'object' && propertyValue !== undefined && propertyValue !== null) {
-            pairs.push(`${encodeURIComponent(propertyKey)}=${encodeURIComponent(String(propertyValue))}`);
-          }
-        }
-        if (pairs.length > 0) segment += `(${pairs.join(',')})`;
-      }
-      return segment;
-    });
-    return '#' + segments.join('/');
   }
 
   /**
@@ -225,7 +165,7 @@ export class SduiBladeService {
     const parsedBlade = { ...blade, id, properties: blade.properties || {} } as Required<SduiBladeNode>;
     const newBlades = [parsedBlade];
     this._activeBlades.set(newBlades);
-    this.updateURLHash(newBlades, true);
+    this.recordHistory(newBlades);
   }
 
   /**
@@ -234,10 +174,10 @@ export class SduiBladeService {
    * Impact on others: This clears all existing DOM portals and replaces the visual state deterministically.
    * @param blades A complete array of `SduiBladeNode` models to replace state.
    */
-  setBlades(blades: SduiBladeNode[]): void {
+  setBlades(blades: SduiBladeNode[], replace = false): void {
     const typed = blades as Required<SduiBladeNode>[];
     this._activeBlades.set(typed);
-    this.updateURLHash(typed, true);
+    this.recordHistory(typed, replace);
   }
 
   /**
@@ -249,39 +189,31 @@ export class SduiBladeService {
    */
   updateBladeProperties(id: string, properties: Partial<SduiBladeNode['properties']>): void {
     this._activeBlades.update((blades: Required<SduiBladeNode>[]) => {
-      const index = blades.findIndex(bladeNode => bladeNode.id === id);
+      const index = blades.findIndex((bladeNode) => bladeNode.id === id);
       if (index > -1) {
         const newBlades = [...blades];
         const existingNode = newBlades[index];
         newBlades[index] = {
           ...existingNode,
-          properties: { ...(existingNode.properties || {}), ...properties }
+          properties: { ...(existingNode.properties || {}), ...properties },
         } as unknown as Required<SduiBladeNode>;
         // Use replace = true so partial layout tweaks don't flood the browser Back navigation stack
-        this.updateURLHash(newBlades, true);
+        this.recordHistory(newBlades, true);
         return newBlades;
       }
       return blades;
     });
   }
-  private updateURLHash(nodes: Required<SduiBladeNode>[], replace = false): void {
-    if (this.isProgrammaticBack) return; // Prevent loop
-    const newHash = this.serializeToHash(nodes);
-    
-    // We only interact with URL if we are in browser to prevent errors on SSR
-    if (isPlatformBrowser(this.platformId)) {
-      const windowObj = this.document.defaultView;
-      const currentHash = windowObj?.location.hash || ''; // Need explicitly to catch empty
-      if (currentHash !== newHash && windowObj) {
-        if (replace) {
-          windowObj.history.replaceState(null, '', windowObj.location.pathname + windowObj.location.search + newHash);
-        } else if (newHash === '') {
-          windowObj.history.pushState(null, '', windowObj.location.pathname + windowObj.location.search);
-        } else {
-          windowObj.history.pushState(null, '', windowObj.location.pathname + windowObj.location.search + newHash);
-        }
-      }
-    }
+  private recordHistory(nodes: Required<SduiBladeNode>[], replace = false): void {
+    for (const node of nodes) this.payloadCache.set(node.id, node);
+    const durable = nodes.filter((node) => {
+      const properties = node.properties as Record<string, unknown> | undefined;
+      return !properties?.['isTransient'] && !properties?.['skipUrl'];
+    });
+    this.history?.record(
+      nodes.map((node) => node.id),
+      replace,
+      durable.map((node) => node.id),
+    );
   }
 }
-

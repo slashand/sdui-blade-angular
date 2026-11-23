@@ -42,17 +42,24 @@
   display: flex;
   flex: 1 1 auto;
   overflow: hidden;
+  overflow: clip;
 }
 
 @keyframes sdui-blade-slide-in {
   from {
-    translate: 100% 0;
+    transform: translate3d(100%, 0, 0);
+  }
+  to {
+    transform: translate3d(0, 0, 0);
   }
 }
 
 @keyframes sdui-blade-slide-out {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
   to {
-    translate: 100% 0;
+    transform: translate3d(100%, 0, 0);
   }
 }
 
@@ -67,9 +74,10 @@
   pointer-events: none;
 }
 
-.sdui-blade-host-instance .sdui-blade-host-scroll-boundary {
+.sdui-blade-enter .sdui-blade-host-scroll-boundary {
   animation: sdui-blade-slide-in var(--sdui-blade-speed, 500ms) var(--sdui-blade-easing, cubic-bezier(0, 0, 0.2, 1))
-    forwards;
+    both;
+  will-change: transform;
 }
 
 /* 
@@ -85,7 +93,7 @@
   }
 }
 
-.sdui-blade-host-instance {
+.sdui-blade-enter {
   animation: sdui-blade-hold var(--sdui-blade-speed, 500ms) ease-out forwards;
 }
 
@@ -95,14 +103,15 @@
 
 .sdui-blade-leave .sdui-blade-host-scroll-boundary {
   animation: sdui-blade-slide-out var(--sdui-blade-speed, 500ms) var(--sdui-blade-easing, cubic-bezier(0.4, 0, 1, 1))
-    forwards !important;
+    both !important;
+  will-change: transform;
 }
 
 .sdui-blade-host-instance.sdui-transient-backdrop {
   pointer-events: auto;
-  background-color: var(--sdui-backdrop-bg, rgba(0, 0, 0, 0.3));
-  backdrop-filter: blur(var(--sdui-backdrop-blur, 2px));
-  -webkit-backdrop-filter: blur(var(--sdui-backdrop-blur, 2px));
+  background-color: var(--sdui-backdrop-bg, transparent);
+  backdrop-filter: blur(var(--sdui-backdrop-blur, 0px));
+  -webkit-backdrop-filter: blur(var(--sdui-backdrop-blur, 0px));
 }
 
 .sdui-blade-host-scroll-boundary {
@@ -362,9 +371,9 @@ sdui-base-blade {
 .sdui-blade-close {
   padding: 6px;
   border-radius: 6px;
-  background: transparent;
+  background: var(--sdui-close-background, transparent);
   border: none;
-  color: var(--th-text-secondary, #94a3b8);
+  color: var(--sdui-close-color, var(--th-text-primary, inherit));
   cursor: pointer;
   transition:
     background-color 0.2s,
@@ -374,8 +383,17 @@ sdui-base-blade {
   justify-content: center;
 }
 .sdui-blade-close:hover {
-  background-color: var(--th-element-bg, #475569);
-  color: var(--th-text-primary, #f8fafc);
+  border: var(--sdui-close-hover-border, 0);
+  background-color: var(--sdui-close-hover-background, #c42b1c);
+  color: var(--sdui-close-hover-color, var(--sdui-close-color, #fff));
+}
+.sdui-blade-close:active {
+  border: var(--sdui-close-active-border, 0);
+  background-color: var(--sdui-close-active-background, #8f1d12);
+}
+.sdui-blade-close:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
 }
 
 /* Blade Content */
